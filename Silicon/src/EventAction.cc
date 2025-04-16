@@ -56,7 +56,7 @@ void EventAction::BeginOfEventAction(const G4Event* /*event*/)
 
 void EventAction::EndOfEventAction(const G4Event* event)
 {
-
+  
   G4DigiManager* digiManager = G4DigiManager::GetDMpointer();
   digiManager->Digitize("SiliconDigitizer");
 

@@ -62,10 +62,26 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4StepPoint* cPoint = step->GetPostStepPoint();
   G4StepPoint* pPoint = step->GetPreStepPoint();
 
-  if (track->GetParentID() == 0 && (volume == fDetConstruction->GetsiliconSensorPV() && volume_pre != fDetConstruction->GetsiliconSensorPV()) || (volume == fDetConstruction->GetsiliconSensorPV_1() && volume_pre != fDetConstruction->GetsiliconSensorPV_1())) {
-  //if (volume == fDetConstruction->GetsiliconSensorPV()) {
+  //if (track->GetParentID() == 0 && (volume == fDetConstruction->GetsiliconSensorPV() && volume_pre != fDetConstruction->GetsiliconSensorPV()) || (volume == fDetConstruction->GetsiliconSensorPV_1() && volume_pre != fDetConstruction->GetsiliconSensorPV_1())) {
+  //if (volume == fDetConstruction->GetsiliconSensorPV() && volume_pre != fDetConstruction->GetsiliconSensorPV()) {
+  if (volume == fDetConstruction->GetsiliconSensorPV()) {
+      // printing out something 
+      G4ThreeVector preStepPos = cPoint->GetPosition();
+      G4ThreeVector postStepPos = pPoint->GetPosition();
+      const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
+      G4String processName = "notAssigned";
+      if (process) {
+          processName = process->GetProcessName();
+          //G4cout << "YB: testing Process: " << process->GetProcessName() << G4endl;
+          //G4String particleName = track->GetDefinition()->GetParticleName();
+          //G4ThreeVector momentumDir = track->GetMomentumDirection();
+          //G4cout << "YB: testingwith incomming from : " << particleName << G4endl;
+          //G4cout << "YB: testing                 at : " << preStepPos.x() / mm << ", "<<preStepPos.y() / mm <<", "<< preStepPos.z() / mm   <<" ) mm"<< G4endl;
+
+      }
 
 
+      
       // energy deposit
       auto edep = step->GetTotalEnergyDeposit();
       // get mass
@@ -98,7 +114,9 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       auto pathLength = track-> GetTrackLength();
 
       auto time = cPoint->GetGlobalTime();
-      auto momentum = cPoint->GetMomentum();
+      //auto momentum = pPoint->GetMomentum();
+      //auto pMag = momentum.mag();
+      auto momentum=track->GetMomentum();
       auto pMag = momentum.mag();
 
       auto dedx = edep / stepLength;
@@ -124,8 +142,13 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
           hit->SetEdep(edep);
           hit->SetPos(pos);
           hit->SetVertex(vertex);
+          hit->SetPreStepPos(preStepPos);
+          hit->SetPostStepPos(postStepPos);
           hit->SetPathLength(pathLength);
-
+          hit->SetProcessName(processName);
+          G4int eventID = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
+          
+          hit->SetEventID(eventID);
           hit->SetTime(time);
           hit->SetStepLength(stepLength);
           hit->SetDedx(dedx);

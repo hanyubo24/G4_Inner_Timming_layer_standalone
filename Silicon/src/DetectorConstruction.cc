@@ -117,18 +117,19 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
   fSiliconLogic = siliconSensorLV; 
   siliconSensorPV = new G4PVPlacement(0, G4ThreeVector(0,0,thickness/2), siliconSensorLV, "Silicon", worldLV, false, 0, fCheckOverlaps);
 
-  auto solidSensor_1 = new G4Box("Silicon_1", 400*pitch/2, 100*pitch/2, thickness/2);
-  auto siliconSensorLV_1 = new G4LogicalVolume(solidSensor_1, siliconMaterial, "Silicon_1");
+ // second layer
+ // auto solidSensor_1 = new G4Box("Silicon_1", 400*pitch/2, 100*pitch/2, thickness/2);
+ // auto siliconSensorLV_1 = new G4LogicalVolume(solidSensor_1, siliconMaterial, "Silicon_1");
 
-  fSiliconLogic_1 = siliconSensorLV_1; 
-  siliconSensorPV_1 = new G4PVPlacement(0, G4ThreeVector(0,0,10*cm), siliconSensorLV_1, "Silicon_1", worldLV, false, 0, fCheckOverlaps);
+ // fSiliconLogic_1 = siliconSensorLV_1; 
+ // siliconSensorPV_1 = new G4PVPlacement(0, G4ThreeVector(0,0,10*cm), siliconSensorLV_1, "Silicon_1", worldLV, false, 0, fCheckOverlaps);
 
   // Visualization attributes
   //
   worldLV->SetVisAttributes(G4VisAttributes::GetInvisible());
   //worldLV->SetVisAttributes(G4VisAttributes(G4Colour::White()));
   siliconSensorLV->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
-  siliconSensorLV_1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
+//  siliconSensorLV_1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
 
   // Always return the physical World
   //
@@ -154,7 +155,7 @@ void DetectorConstruction::ConstructSDandField()
   auto* siliconSD = new SiliconSensitiveDetector("SiliconSD");
   sdManager->AddNewDetector(siliconSD);
   fSiliconLogic->SetSensitiveDetector(siliconSD);
-  fSiliconLogic_1->SetSensitiveDetector(siliconSD);
+ // fSiliconLogic_1->SetSensitiveDetector(siliconSD);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

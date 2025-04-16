@@ -67,21 +67,27 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
   // In order to avoid dependence of PrimaryGeneratorAction
 
   G4double p = fPMin + (fPMax - fPMin) * G4UniformRand();
+  G4double theta = 2 * M_PI * G4UniformRand();
 
-  G4double Mdx = (0.1)* G4UniformRand()-0.1; 
+  G4double Mdx = cos(theta); 
+ //G4double Mdy =  (0.05)* G4UniformRand()-0.025; 
   G4double Mdy =  (0.05)* G4UniformRand()-0.025; 
+  G4double Mdz =  1+0.05*sin(theta); 
   
+  G4ThreeVector dir(Mdx, Mdy, Mdz);
+  dir = dir.unit(); 
   auto particleDefinition = G4ParticleTable::GetParticleTable()->FindParticle(fParticleName);
-  G4cout << "[PrimaryGenerator] Using " << fParticleName 
-       << " with p in range: [" << fPMin / MeV << " MeV, " 
-       << fPMax / MeV << " MeV]" << G4endl;
-  G4cout << "[PrimaryGenerator] position z: (should be always negative value ) " << fgunZ <<G4endl; 
+  //G4cout << "[PrimaryGenerator] Using " << fParticleName 
+  //     << " with p in range: [" << fPMin / MeV << " MeV, " 
+  //     << fPMax / MeV << " MeV]" << G4endl;
+  //G4cout << "[PrimaryGenerator] position z: (should be always negative value ) " << fgunZ <<G4endl; 
   G4double mass = particleDefinition->GetPDGMass();
-  G4double energy = std::sqrt(p * p + mass * mass);
+  //G4double energy = std::sqrt(p * p + mass * mass);
+  //G4double energy = p;
 
   fParticleGun->SetParticleDefinition(particleDefinition);
-  fParticleGun->SetParticleEnergy(energy);
-  //fParticleGun->SetParticleMomentumDirection(G4ThreeVector(Mdx, Mdy, 1.));
+  fParticleGun->SetParticleMomentum(p);
+  //fParticleGun->SetParticleMomentumDirection(dir);
   fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0, 0, 1.));
 
 

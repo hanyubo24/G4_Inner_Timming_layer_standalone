@@ -8,6 +8,7 @@
 #include "SiliconHit.hh"  
 #include "G4AnalysisManager.hh"
 #include "G4RunManager.hh"
+#include "G4Event.hh"
 #include "G4PhysicalConstants.hh"
 #include <cmath>
 
@@ -51,7 +52,15 @@ void SiliconDigitizer::Digitize() {
     auto hitPathLength =  hit->GetPathLength(); 
     auto pos = hit->GetPos();
     auto vertex = hit->GetVertex();
-
+    auto PreStepPos = hit->GetPreStepPos();
+    auto PostStepPos = hit->GetPostStepPos();
+    auto PreStepPos_x = PreStepPos.x();
+    auto PreStepPos_y = PreStepPos.y();
+    auto PreStepPos_z = PreStepPos.z();
+    auto PostStepPos_x = PostStepPos.x();
+    auto PostStepPos_y = PostStepPos.y();
+    auto PostStepPos_z = PostStepPos.z();
+    auto processName = hit->GetProcessName();
     auto stepl = hit->GetStepLength();
     auto stepdedx = hit->GetDedx();
     auto MomIn = hit->GetMomIn();
@@ -74,7 +83,8 @@ void SiliconDigitizer::Digitize() {
     auto ActualDriftz = hit->GetActualDriftz();
     auto driftTime = ActualDriftz / driftVelocity;
     auto time = driftTime + G4RandGauss::shoot(0., timeSmearing);
-    auto hitTSmeared = hitT+ time;
+    //auto hitTSmeared = hitT+ time;
+    auto hitTSmeared = hitT+ G4RandGauss::shoot(0., timeSmearing);
     
     auto wf = GenerateWaveform(edep, hitT);
     for (size_t j = 0; j < wf.size(); ++j){
@@ -117,17 +127,26 @@ void SiliconDigitizer::Digitize() {
     analysisManager->FillNtupleDColumn(0, 13, hitTSmeared);
     
     auto expectedTOF = [&](G4double mass) {
-    return hitPathLength / c_light * std::sqrt(1 + std::pow(mass / MomIn, 2));
+    //return hitPathLength / c_light * std::sqrt(1 + std::pow(mass / MomIn, 2));
+    return hitPathLength / (c_light * (MomIn/ (std::sqrt(MomIn*MomIn + mass*mass))));
     };
+
     auto logLikelihood = [&](G4double t_expected) {
     G4double delta = hitTSmeared - t_expected;
     return 0.5 * std::pow(delta / timeSmearing, 2);
     };
-    auto llh_e = -logLikelihood(expectedTOF(Mass_e));
-    auto llh_mu  = -logLikelihood(expectedTOF(Mass_mu));
-    auto llh_pi = -logLikelihood(expectedTOF(Mass_pi));
-    auto llh_kaon = -logLikelihood(expectedTOF(Mass_kaon));
-    auto llh_p = -logLikelihood(expectedTOF(Mass_p));
+    
+    auto expt_e = expectedTOF(Mass_e);
+    auto expt_mu = expectedTOF(Mass_mu);
+    auto expt_pi = expectedTOF(Mass_pi);
+    auto expt_kaon = expectedTOF(Mass_kaon);
+    auto expt_p = expectedTOF(Mass_p);
+
+    auto llh_e = -logLikelihood(expt_e);
+    auto llh_mu  = -logLikelihood(expt_mu);
+    auto llh_pi = -logLikelihood(expt_pi);
+    auto llh_kaon = -logLikelihood(expt_kaon);
+    auto llh_p = -logLikelihood(expt_p);
 
     auto max_num_for_norm = std::max({llh_e, llh_mu, llh_pi, llh_kaon, llh_p});
 
@@ -162,10 +181,28 @@ void SiliconDigitizer::Digitize() {
     analysisManager->FillNtupleDColumn(0, 16, P_pi);
     analysisManager->FillNtupleDColumn(0, 17, P_kaon);
     analysisManager->FillNtupleDColumn(0, 18, P_p);
+    analysisManager->FillNtupleDColumn(0, 19, L_e);
+    analysisManager->FillNtupleDColumn(0, 20, L_mu);
+    analysisManager->FillNtupleDColumn(0, 21, L_pi);
+    analysisManager->FillNtupleDColumn(0, 22, L_kaon);
+    analysisManager->FillNtupleDColumn(0, 23, L_p);
 
-    analysisManager->FillNtupleDColumn(0, 19, hitPathLength);
-    //G4int eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-    //analysisManager->FillNtupleIColumn(0,20, eventID);   
+    analysisManager->FillNtupleDColumn(0, 24, hitPathLength);
+    analysisManager->FillNtupleDColumn(0, 25, expt_e);
+    analysisManager->FillNtupleDColumn(0, 26, expt_mu);
+    analysisManager->FillNtupleDColumn(0, 27, expt_pi);
+    analysisManager->FillNtupleDColumn(0, 28, expt_kaon);
+    analysisManager->FillNtupleDColumn(0, 29, expt_p);
+    analysisManager->FillNtupleDColumn(0, 30, PreStepPos_x);
+    analysisManager->FillNtupleDColumn(0, 31, PreStepPos_y);
+    analysisManager->FillNtupleDColumn(0, 32, PreStepPos_z);
+    analysisManager->FillNtupleDColumn(0, 33, PostStepPos_x);
+    analysisManager->FillNtupleDColumn(0, 34, PostStepPos_y);
+    analysisManager->FillNtupleDColumn(0, 35, PostStepPos_z);
+    analysisManager->FillNtupleSColumn(0, 36, processName);
+    //G4int eventID = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
+    auto eventID= hit->GetEventID();
+    analysisManager->FillNtupleIColumn(0,37, eventID);   
 
     analysisManager->AddNtupleRow(0);
 

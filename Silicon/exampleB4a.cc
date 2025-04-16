@@ -72,10 +72,10 @@ int main(int argc, char** argv)
   G4int nThreads = 0;
   G4double pMin = 80 *MeV;
   G4double pMax = 80 *MeV;
-  G4String particleName = "e-";
+  G4String particleName = "kaon-";
   G4bool show_gui = false; 
   G4String outFileName = "Silicon.root"; 
-  G4int nEvent = 1000;
+  G4int nEvent = 20;
   G4double gunZPos = -14.0 * cm; 
 #endif
   for (G4int i = 1; i < argc; i = i + 2) {

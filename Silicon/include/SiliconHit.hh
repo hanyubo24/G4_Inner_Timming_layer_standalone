@@ -27,9 +27,13 @@ public:
   void SetMomIn(G4double mom) { fMomentumIn = mom; }
   void SetParticleMass(G4double mass) { fParticleMass = mass; }
   void SetHitLayer(G4int layer) { fLayer = layer; }
+  void SetEventID(G4int EventID) { fEventID = EventID; }
   void SetActualDriftz(G4double ActualDriftz) { fActualDriftz = ActualDriftz; }
   void SetVertex(const G4ThreeVector& vertex) { fVertex = vertex; } 
+  void SetPreStepPos(const G4ThreeVector& preStepPos){fpreStepPos=preStepPos;}
+  void SetPostStepPos(const G4ThreeVector& postStepPos){fpostStepPos = postStepPos;}
   void SetPathLength(G4double pathLength) { fpathLength = pathLength; }  
+  void SetProcessName(const G4String processName){fprocessName = processName;}
 
 
   void AddEdep(G4double edep) { fEdep += edep; }
@@ -41,25 +45,32 @@ public:
   G4double GetDedx() const { return fdedx; }
   G4double GetMomIn() const { return fMomentumIn; }
   G4double GetParticleMass() const { return fParticleMass; }
-  G4double GetHitLayer() const { return fLayer; }
+  G4int GetHitLayer() const { return fLayer; }
   G4double GetPathLength() const {return fpathLength;}
   G4double GetActualDriftz() const {return fActualDriftz;}
   G4ThreeVector GetVertex() const {return fVertex;}
-
+  G4ThreeVector GetPreStepPos() const {return fpreStepPos;}
+  G4ThreeVector GetPostStepPos() const {return fpostStepPos;}
+  G4String GetProcessName() const {return fprocessName;}
+  G4int GetEventID() const {return fEventID;}
   void Print() override;
 
 private:
   G4double fEdep;
   G4ThreeVector fPos;
   G4ThreeVector fVertex;
+  G4ThreeVector fpreStepPos;
+  G4ThreeVector fpostStepPos;
   G4double fpathLength;
   G4double fTime;
   G4double fstepLength;
   G4double fdedx;
   G4double fMomentumIn;
   G4double fParticleMass;
+  G4String fprocessName;
   G4double fActualDriftz;
   G4int fLayer;
+  G4int fEventID;
 };
 
 using SiliconHitsCollection = G4THitsCollection<SiliconHit>;

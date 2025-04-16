@@ -20,9 +20,9 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------
 # Add the executable, use our local headers, and link it to the Geant4 libraries
 #
-add_executable(Silicon exampleB4a.cc ${sources} ${headers})
-target_include_directories(Silicon PRIVATE include)
-target_link_libraries(Silicon PRIVATE ${Geant4_LIBRARIES})
+add_executable(Silicon_noB exampleB4a.cc ${sources} ${headers})
+target_include_directories(Silicon_noB PRIVATE include)
+target_link_libraries(Silicon_noB PRIVATE ${Geant4_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
@@ -34,6 +34,11 @@ set(EXAMPLEB4A_SCRIPTS
   exampleB4.in
   gui.mac
   init_vis.mac
+  plotHisto.C
+  plotNtuple.C
+  run1.mac
+  run2.mac
+  vis.mac
   )
 
 foreach(_script ${EXAMPLEB4A_SCRIPTS})

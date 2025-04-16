@@ -96,9 +96,26 @@ RunAction::RunAction(const G4String& outFileName)
     analysisManager->CreateNtupleDColumn("P_mu");
     analysisManager->CreateNtupleDColumn("P_pi");
     analysisManager->CreateNtupleDColumn("P_kaon");
-    analysisManager->CreateNtupleDColumn("P_p");
+    analysisManager->CreateNtupleDColumn("P_proton");
+    analysisManager->CreateNtupleDColumn("L_e");
+    analysisManager->CreateNtupleDColumn("L_mu");
+    analysisManager->CreateNtupleDColumn("L_pi");
+    analysisManager->CreateNtupleDColumn("L_kaon");
+    analysisManager->CreateNtupleDColumn("L_proton");
     analysisManager->CreateNtupleDColumn("HitPathLength_fromTrack");
-    //analysisManager->CreateNtupleDColumn("EventID");
+    analysisManager->CreateNtupleDColumn("expt_e");
+    analysisManager->CreateNtupleDColumn("expt_mu");
+    analysisManager->CreateNtupleDColumn("expt_pi");
+    analysisManager->CreateNtupleDColumn("expt_kaon");
+    analysisManager->CreateNtupleDColumn("expt_proton");
+    analysisManager->CreateNtupleDColumn("prePos_x");
+    analysisManager->CreateNtupleDColumn("prePos_y");
+    analysisManager->CreateNtupleDColumn("prePos_z");
+    analysisManager->CreateNtupleDColumn("postPos_x");
+    analysisManager->CreateNtupleDColumn("postPos_y");
+    analysisManager->CreateNtupleDColumn("postPos_z");
+    analysisManager->CreateNtupleSColumn("processName");
+    analysisManager->CreateNtupleIColumn("EventID");
 
     analysisManager->FinishNtuple();
     analysisManager->CreateNtuple("EventNtuple", "Event signal");
