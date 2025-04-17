@@ -20,9 +20,12 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------
 # Add the executable, use our local headers, and link it to the Geant4 libraries
 #
-add_executable(Silicon_noB exampleB4a.cc ${sources} ${headers})
-target_include_directories(Silicon_noB PRIVATE include)
-target_link_libraries(Silicon_noB PRIVATE ${Geant4_LIBRARIES})
+#add_executable(Silicon_noB exampleB4a.cc ${sources} ${headers})
+#target_include_directories(Silicon_noB PRIVATE include)
+#target_link_libraries(Silicon_noB PRIVATE ${Geant4_LIBRARIES})
+add_executable(Silicon_thick exampleB4a.cc ${sources} ${headers})
+target_include_directories(Silicon_thick PRIVATE include)
+target_link_libraries(Silicon_thick PRIVATE ${Geant4_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we

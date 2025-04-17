@@ -65,18 +65,25 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   //if (track->GetParentID() == 0 && (volume == fDetConstruction->GetsiliconSensorPV() && volume_pre != fDetConstruction->GetsiliconSensorPV()) || (volume == fDetConstruction->GetsiliconSensorPV_1() && volume_pre != fDetConstruction->GetsiliconSensorPV_1())) {
   //if (volume == fDetConstruction->GetsiliconSensorPV() && volume_pre != fDetConstruction->GetsiliconSensorPV()) {
   if (volume == fDetConstruction->GetsiliconSensorPV()) {
+
       // printing out something 
-      G4ThreeVector preStepPos = cPoint->GetPosition();
-      G4ThreeVector postStepPos = pPoint->GetPosition();
+      G4ThreeVector preStepPos = pPoint->GetPosition();
+      G4ThreeVector postStepPos = cPoint->GetPosition();
+
+      if (postStepPos.mag() < 1e-6) return;
+      if (step->GetStepLength() == 0) return;  // skip pure Transportation
+      //if (step->GetTotalEnergyDeposit() <= 0) return;  // optional
+
       const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
       G4String processName = "notAssigned";
       if (process) {
           processName = process->GetProcessName();
-          //G4cout << "YB: testing Process: " << process->GetProcessName() << G4endl;
-          //G4String particleName = track->GetDefinition()->GetParticleName();
-          //G4ThreeVector momentumDir = track->GetMomentumDirection();
-          //G4cout << "YB: testingwith incomming from : " << particleName << G4endl;
-          //G4cout << "YB: testing                 at : " << preStepPos.x() / mm << ", "<<preStepPos.y() / mm <<", "<< preStepPos.z() / mm   <<" ) mm"<< G4endl;
+        //  G4cout << "YB: testing Process: " << process->GetProcessName() << G4endl;
+          G4String particleName = track->GetDefinition()->GetParticleName();
+          G4ThreeVector momentumDir = track->GetMomentumDirection();
+        //  G4cout << "YB: testingwith incomming from : " << particleName << G4endl;
+        //  G4cout << "YB: testing   pre              at : " << preStepPos.x() / mm << ", "<<preStepPos.y() / mm <<", "<< preStepPos.z() / mm   <<" ) mm"<< G4endl;
+        //  G4cout << "YB: testing   post              at : " << postStepPos.x() / mm << ", "<<postStepPos.y() / mm <<", "<< postStepPos.z() / mm   <<" ) mm"<< G4endl;
 
       }
 
@@ -122,6 +129,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       auto dedx = edep / stepLength;
  
       static G4int hcID = -1;
+      
       if (hcID < 0) {
           hcID = G4SDManager::GetSDMpointer()->GetCollectionID("SiliconSD/SiliconHitsCollection");
       }
@@ -133,8 +141,14 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       G4HCofThisEvent* hce = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetHCofThisEvent();
       if (!hce) return;
       auto* hitCollection = static_cast<SiliconHitsCollection*>(hce->GetHC(hcID));
-      if (!hitCollection) return;
+      if (!hitCollection){
+        // First time: create and add it manually
+        hitCollection = new SiliconHitsCollection("SiliconSD", "SiliconHitsCollection");
+        hce->AddHitsCollection(hcID, hitCollection);
 
+        }
+       //G4cout << "[Debug] HC ID: " << hcID << ", collection pointer: " << hitCollection << G4endl;
+       //G4cout << "[Debug] Entries BEFORE insert: " << hitCollection->entries() << G4endl;
 
         fEventAction->AddAbs(edep);
           // Create and fill hit
@@ -158,6 +172,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
           hit->SetHitLayer(hit_layer);
           hitCollection->insert(hit);
+         // G4debug<<" filling hitCollection ...."<<G4endl;
+         // G4cout << "[Debug] Entries AFTER insert: " << hitCollection->entries() << G4endl;
   }
 
 }

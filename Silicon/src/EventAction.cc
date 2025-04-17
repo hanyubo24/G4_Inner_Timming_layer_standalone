@@ -36,6 +36,8 @@
 #include "G4UnitsTable.hh"
 #include "SiliconDigitizer.hh"
 #include "SiliconDigi.hh"
+#include "G4SDManager.hh"
+#include "SiliconHit.hh" 
 #include <iomanip>
 
 namespace B4a
@@ -56,21 +58,28 @@ void EventAction::BeginOfEventAction(const G4Event* /*event*/)
 
 void EventAction::EndOfEventAction(const G4Event* event)
 {
+  if (hitColID == -1) {
+  hitColID= G4SDManager::GetSDMpointer()->GetCollectionID("SiliconSD/SiliconHitsCollection");  
+}
+  auto hitsCol = static_cast<const SiliconHitsCollection*>(event->GetHCofThisEvent()->GetHC(hitColID));
+ // std::cout<< "YB testing end of Events "<< hitsCol->entries() <<std::endl;
   
   G4DigiManager* digiManager = G4DigiManager::GetDMpointer();
   digiManager->Digitize("SiliconDigitizer");
+  
+  
 
-  G4int dcID = digiManager->GetDigiCollectionID("SiliconDigitizer/SiliconDigiCollection");
-  auto* digits = const_cast<SiliconDigiCollection*>(static_cast<const SiliconDigiCollection*>(digiManager->GetDigiCollection(dcID)));
+  //G4int dcID = digiManager->GetDigiCollectionID("SiliconDigitizer/SiliconDigiCollection");
+  //auto* digits = const_cast<SiliconDigiCollection*>(static_cast<const SiliconDigiCollection*>(digiManager->GetDigiCollection(dcID)));
 
-//  const auto* digits = static_cast<SiliconDigiCollection*>(digiManager->GetDigiCollection(dcID));;
+////  const auto* digits = static_cast<SiliconDigiCollection*>(digiManager->GetDigiCollection(dcID));;
 
-  if (!digits || digits->entries() == 0) return;
+  //if (!digits || digits->entries() == 0) return;
 
-  auto* digit = (*digits)[0];
-  const std::vector<double>& waveform = digit->GetWaveform();
-  auto ChargedHits = digit->GetCharge(); 
-  auto TimeHits = digit->GetTime(); 
+  //auto* digit = (*digits)[0];
+  //const std::vector<double>& waveform = digit->GetWaveform();
+  //auto ChargedHits = digit->GetCharge(); 
+  //auto TimeHits = digit->GetTime(); 
 
   // Print per event (modulo n)
   //

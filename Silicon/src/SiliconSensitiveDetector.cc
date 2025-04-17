@@ -27,16 +27,16 @@ void SiliconSensitiveDetector::Initialize(G4HCofThisEvent* hce) {
 }
 
 G4bool SiliconSensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*) {
-  G4double edep = step->GetTotalEnergyDeposit();
-  if (edep <= 0) return false;
+  //G4double edep = step->GetTotalEnergyDeposit();
+  //if (edep <= 0) return false;
 
-  SiliconHit* hit = new SiliconHit();
-  hit->SetEdep(edep);
-  hit->SetPos(step->GetPreStepPoint()->GetPosition());
-  hit->SetTime(step->GetPreStepPoint()->GetGlobalTime());
+  //SiliconHit* hit = new SiliconHit();
+  //hit->SetEdep(edep);
+  //hit->SetPos(step->GetPreStepPoint()->GetPosition());
+  //hit->SetTime(step->GetPreStepPoint()->GetGlobalTime());
 
-  fHitsCollection->insert(hit);
-  return true;
+  //fHitsCollection->insert(hit);
+  //return true;
 }
 
 void SiliconSensitiveDetector::EndOfEvent(G4HCofThisEvent*) {

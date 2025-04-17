@@ -61,6 +61,7 @@ class EventAction : public G4UserEventAction
     G4double fEnergyAbs = 0.;
     G4double ChargedHits =0.;
     G4double TimeHits=0.;
+    G4int hitColID = -1; 
     
 };
 

@@ -27,13 +27,13 @@ void SiliconDigitizer::Digitize() {
   std::map<std::pair<G4int, G4int>, SiliconDigi*> pixelMap;
  
   G4DigiManager* digimgr = G4DigiManager::GetDMpointer();
-  if (hitColID < 0) {
+  if (hitColID ==-1) {
       hitColID= digimgr->GetHitsCollectionID("SiliconSD/SiliconHitsCollection");  
   }
 
   const SiliconHitsCollection* hitsCol = static_cast<const SiliconHitsCollection*>(digimgr->GetHitsCollection(hitColID));
   if (!hitsCol) return;
-
+  
   auto digiCollection = new SiliconDigiCollection(GetName(), collectionName[0]);
 
   std::vector<double> fullWaveform(100, 0.0);  
@@ -43,8 +43,10 @@ void SiliconDigitizer::Digitize() {
   double edep_event =0.0;
   double MomIn_event =0.0;
   double massInParticle_event=0.0;
+  
   for (size_t i = 0; i < hitsCol->entries(); ++i) {
     SiliconHit* hit = (*hitsCol)[i];
+    if (!hit) return;
     auto edep = hit->GetEdep();
     auto hitT = hit->GetTime();
     //auto hitTSmeared = hitT+ G4RandGauss::shoot(0., timeSmearing);
@@ -72,7 +74,9 @@ void SiliconDigitizer::Digitize() {
         MomIn_event = MomIn;
         massInParticle_event = massInParticle;
     }
-    
+    //std::cout<< "index i : "<< i <<std::endl; 
+   // std::cout<< "YB testing, pre z: "<< PreStepPos_z<<std::endl; 
+   // std::cout<< "YB testing, post z: "<< PostStepPos_z<<std::endl; 
     // Energy to charge
     auto charge = edep / ePairEnergy;
     charge *= gain;
