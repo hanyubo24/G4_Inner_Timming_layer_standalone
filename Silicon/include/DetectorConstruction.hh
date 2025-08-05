@@ -58,7 +58,7 @@ namespace B4
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
   public:
-    DetectorConstruction() = default;
+    DetectorConstruction(const std::vector<G4double>& radii);
     ~DetectorConstruction() override = default;
 
   public:
@@ -76,6 +76,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     void DefineMaterials();
     G4VPhysicalVolume* DefineVolumes();
 
+    // radius of the cylinder 
+    std::vector<G4double> fRadii;
     // data members
     //
     static G4ThreadLocal G4GlobalMagFieldMessenger* fMagFieldMessenger;

@@ -62,11 +62,12 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4StepPoint* cPoint = step->GetPostStepPoint();
   G4StepPoint* pPoint = step->GetPreStepPoint();
   G4ThreeVector preStepPos = pPoint->GetPosition();
-  if (preStepPos == G4ThreeVector(0., 0., 0.)) {
+  //if (preStepPos == G4ThreeVector(0., 0., 0.)) {
 
-  //if (track->GetParentID() == 0 && (volume == fDetConstruction->GetsiliconSensorPV() && volume_pre != fDetConstruction->GetsiliconSensorPV()) || (volume == fDetConstruction->GetsiliconSensorPV_1() && volume_pre != fDetConstruction->GetsiliconSensorPV_1())) {
-  //if (volume == fDetConstruction->GetsiliconSensorPV() && volume_pre != fDetConstruction->GetsiliconSensorPV()) {
- // if (volume == fDetConstruction->GetsiliconSensorPV() or volume_pre == fDetConstruction->GetsiliconSensorPV() or volume == fDetConstruction->GetsiliconSensorPV_layer1() or volume_pre == fDetConstruction->GetsiliconSensorPV_layer1()) {
+  auto sensor0 = fDetConstruction->GetsiliconSensorPV();
+  auto sensor1 = fDetConstruction->GetsiliconSensorPV_layer1();
+
+  if ((sensor0 && (volume == sensor0 || volume_pre == sensor0)) || (sensor1 && (volume == sensor1 || volume_pre == sensor1))) {
 
       // printing out something 
       G4ThreeVector postStepPos = cPoint->GetPosition();

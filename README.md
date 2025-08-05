@@ -1,17 +1,20 @@
 # G4_Inner_Timming_layer_standalone
-Evaluate the performance of a fast silicon sensor for Belle 3
+Evaluate the performance of a fast silicon sensor for Belle 2
+
+> update in this Branch: enable to specify the radius of the silicon cylinder from command line; allow to add a second layer.
+
 
 One need to have G4 and root installed
 
-0. git clone  git@github.com:hanyubo24/G4_Inner_Timming_layer_standalone.git
-1. compile:
+   >0. git clone  git@github.com:hanyubo24/G4_Inner_Timming_layer_standalone.git
+   >1. compile:
 
    
-    `cd Silicon`, `mkdir build`, `cmake ..`,`make`
+       `cd Silicon`, `mkdir build`, `cmake ..`,`make`
 
-2. run:
+   >2. run:
 
-     `cd .. ` `sh run.sh`
+        `cd .. ` `sh run.sh`
 
    
    

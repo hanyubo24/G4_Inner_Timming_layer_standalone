@@ -51,6 +51,7 @@ void PrintUsage()
   G4cerr << " exampleB4a [-m macro ] [-u UIsession] [-t nThreads] [-vDefault]" << G4endl;
   G4cerr << " exampleB4a -p e- -pmin 80 -pmax 80 -o myOutput.root -z -14.0" << G4endl;
   G4cerr << " exampleB4a -csv xxx.csv -o myOutput.root -z -14.0" << G4endl;
+  G4cerr << " -r 240.0 [mm], ranging from 240 mm to 348 mm " << G4endl;
   G4cerr << " -ui: turnning on the ui" << G4endl;
 }
 }  // namespace
@@ -71,9 +72,11 @@ int main(int argc, char** argv)
   G4bool verboseBestUnits = true;
 #ifdef G4MULTITHREADED
   G4int nThreads = 0;
+
+
+
   G4double pMin = 10 *MeV;
   G4double pMax = 1000 *MeV;
-  //G4String particleName = "kaon-";
   G4String particleName = "pi-";
   G4bool show_gui = false; 
   G4String outFileName = "Silicon.root"; 
@@ -81,6 +84,9 @@ int main(int argc, char** argv)
   G4int nEvent = 1;
   //G4double gunZPos = -2.0 * cm; 
   G4double gunZPos = 0.0 * cm; 
+  std::vector<G4double> radii ={};
+
+
 #endif
   for (G4int i = 1; i < argc; i = i + 2) {
     if (G4String(argv[i]) == "-m")
@@ -93,6 +99,8 @@ int main(int argc, char** argv)
       gunZPos = std::stod(argv[i + 1]) * CLHEP::cm;
     else if (G4String(argv[i]) == "-p")
         particleName = argv[i + 1];
+    else if (G4String(argv[i]) == "-r")
+        radii.push_back(std::stod(argv[i+1]));
     else if (G4String(argv[i]) == "-pmin")
         pMin = std::stod(argv[i + 1]) * MeV;
     else if (G4String(argv[i]) == "-pmax")
@@ -145,7 +153,15 @@ int main(int argc, char** argv)
 
   // Set mandatory initialization classes
   //
-  auto detConstruction = new B4::DetectorConstruction();
+  std::cout<< "Building a cylinder detector with radius: "<<std::endl;
+
+  std::cout << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   Radii: ";
+  for (const auto& r : radii) {
+    std::cout << r << " ";
+  }
+  std::cout << std::endl;
+
+  auto detConstruction = new B4::DetectorConstruction(radii);
   runManager->SetUserInitialization(detConstruction);
 
   auto physicsList = new FTFP_BERT; // QGSP_BERT // YB: to be tested
