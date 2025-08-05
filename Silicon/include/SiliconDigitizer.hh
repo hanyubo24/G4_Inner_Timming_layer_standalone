@@ -16,8 +16,8 @@ private:
   G4double ePairEnergy = 3.6 * eV;   // e-h pair creation energy
   G4double driftVelocity = 1.0e6 * cm/s; 
   G4double diffusionCons = 35. *cm2/s;
-  //G4double timeSmearing = 30 * ps;  // electronics resolution
-  G4double timeSmearing = 100 * ps;  // electronics resolution
+  G4double timeSmearing = 30 * ps;  // electronics resolution
+  //G4double timeSmearing = 100 * ps;  // electronics resolution
   G4double gain = 10.0;
 
   G4double Mass_e = 0.511 *MeV;

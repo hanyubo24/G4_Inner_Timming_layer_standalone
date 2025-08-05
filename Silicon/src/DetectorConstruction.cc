@@ -53,6 +53,10 @@ G4ThreadLocal G4GlobalMagFieldMessenger* DetectorConstruction::fMagFieldMessenge
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+DetectorConstruction::DetectorConstruction(const std::vector<G4double>& radii)
+  : fRadii(radii)
+{}
+
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
   // Define materials
@@ -112,52 +116,37 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
                                    0,  // copy number
                                    fCheckOverlaps);  // checking overlaps
 
+  worldLV->SetVisAttributes(G4VisAttributes::GetInvisible());
+
   
   // Silicon
-/*
- //  a simple layer 
-  auto solidSensor = new G4Box("Silicon", 400*pitch/2, 100*pitch/2, thickness/2);
-  auto siliconSensorLV = new G4LogicalVolume(solidSensor, siliconMaterial, "Silicon");
-
-  fSiliconLogic = siliconSensorLV; 
-  siliconSensorPV = new G4PVPlacement(0, G4ThreeVector(0,0,thickness/2), siliconSensorLV, "Silicon", worldLV, false, 0, fCheckOverlaps);
-
- // second layer
- // auto solidSensor_1 = new G4Box("Silicon_1", 400*pitch/2, 100*pitch/2, thickness/2);
- // auto siliconSensorLV_1 = new G4LogicalVolume(solidSensor_1, siliconMaterial, "Silicon_1");
-
- // fSiliconLogic_1 = siliconSensorLV_1; 
- // siliconSensorPV_1 = new G4PVPlacement(0, G4ThreeVector(0,0,10*cm), siliconSensorLV_1, "Silicon_1", worldLV, false, 0, fCheckOverlaps);
-*/
- // a cylinder 
+  //  - a cylinder 
   G4double angle_f= 12.0*deg;
   G4double angle_b= 26.0*deg; // 180-154*deg
-  G4double radius_for_testing = 240*mm;
+
+  
+  //G4double radius_for_testing = 240*mm;
+  G4double radius_for_testing = fRadii[0]*mm; // so far only use the first layer 
   G4double length_f = radius_for_testing / std::tan(angle_f);
   G4double length_b = radius_for_testing / std::tan(angle_b);
-
-  G4double radius_for_testing_layer1 = 360*mm;
-  G4double length_f_layer1 = radius_for_testing_layer1 / std::tan(angle_f);
-  G4double length_b_layer1 = radius_for_testing_layer1 / std::tan(angle_b);
 
   auto solidSensor = new G4Tubs("Silicon", radius_for_testing,  radius_for_testing+thickness, (length_f+length_b)/2.0, 0.0*deg, 360.0*deg);
   auto siliconSensorLV = new G4LogicalVolume(solidSensor, siliconMaterial, "Silicon");    
   fSiliconLogic = siliconSensorLV; 
   siliconSensorPV = new G4PVPlacement(0, G4ThreeVector(0,0, length_f - (length_f+length_b)/2.0), siliconSensorLV, "Silicon", worldLV, false, 0, fCheckOverlaps);
-
-  auto solidSensor_layer1 = new G4Tubs("Silicon_layer1", radius_for_testing_layer1,  radius_for_testing_layer1+thickness, (length_f_layer1+length_b_layer1)/2.0, 0.0*deg, 360.0*deg);
-  auto siliconSensorLV_layer1 = new G4LogicalVolume(solidSensor_layer1, siliconMaterial, "Silicon_layer1");    
-  fSiliconLogic_layer1 = siliconSensorLV_layer1; 
-  siliconSensorPV_layer1 = new G4PVPlacement(0, G4ThreeVector(0,0, length_f_layer1 - (length_f_layer1+length_b_layer1)/2.0), siliconSensorLV_layer1, "Silicon_layer1", worldLV, false, 0, fCheckOverlaps);
-
-  // Visualization attributes
-  //
-  worldLV->SetVisAttributes(G4VisAttributes::GetInvisible());
-  //worldLV->SetVisAttributes(G4VisAttributes(G4Colour::White()));
   siliconSensorLV->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
-  siliconSensorLV_layer1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
 
-  // Geometry parameters
+  if (fRadii.size()>1) {
+      G4double radius_for_testing_layer1 = fRadii[1]*mm;;
+      G4double length_f_layer1 = radius_for_testing_layer1 / std::tan(angle_f);
+      G4double length_b_layer1 = radius_for_testing_layer1 / std::tan(angle_b);
+
+      auto solidSensor_layer1 = new G4Tubs("Silicon_layer1", radius_for_testing_layer1,  radius_for_testing_layer1+thickness, (length_f_layer1+length_b_layer1)/2.0, 0.0*deg, 360.0*deg);
+      auto siliconSensorLV_layer1 = new G4LogicalVolume(solidSensor_layer1, siliconMaterial, "Silicon_layer1");    
+      fSiliconLogic_layer1 = siliconSensorLV_layer1; 
+      siliconSensorPV_layer1 = new G4PVPlacement(0, G4ThreeVector(0,0, length_f_layer1 - (length_f_layer1+length_b_layer1)/2.0), siliconSensorLV_layer1, "Silicon_layer1", worldLV, false, 0, fCheckOverlaps);
+      siliconSensorLV_layer1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
+  }
   G4double minStep = 0.0 * um;
 
   auto* userLimits = new G4UserLimits(0., DBL_MAX, DBL_MAX, 0., minStep);
@@ -193,7 +182,9 @@ void DetectorConstruction::ConstructSDandField()
   auto* siliconSD = new SiliconSensitiveDetector("SiliconSD");
   sdManager->AddNewDetector(siliconSD);
   fSiliconLogic->SetSensitiveDetector(siliconSD);
+  if (fRadii.size()>1) {
   fSiliconLogic_layer1->SetSensitiveDetector(siliconSD);
+  }
  // fSiliconLogic_1->SetSensitiveDetector(siliconSD);
 }
 
