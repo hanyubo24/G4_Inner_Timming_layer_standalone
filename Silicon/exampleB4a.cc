@@ -179,6 +179,7 @@ int main(int argc, char** argv)
       auto actionInitialization = new B4a::ActionInitialization(detConstruction, inFileName,outFileName, gunZPos);
       runManager->SetUserInitialization(actionInitialization);
       G4int nEvent_r = 1;
+
       G4int nEvent_skipped = 0;
       if (!inFileName.empty()) {
         std::ifstream infile(inFileName);
@@ -193,6 +194,7 @@ int main(int argc, char** argv)
 
            if (nEvent != -1 && nEvent_r >= nEvent)  break;
         }
+
 
       }
   }
