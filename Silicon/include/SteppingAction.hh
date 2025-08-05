@@ -58,9 +58,9 @@ class SteppingAction : public G4UserSteppingAction
     ~SteppingAction() override = default;
 
     void UserSteppingAction(const G4Step* step) override;
-
   private:
     const B4::DetectorConstruction* fDetConstruction = nullptr;
+    
     EventAction* fEventAction = nullptr;
 };
 

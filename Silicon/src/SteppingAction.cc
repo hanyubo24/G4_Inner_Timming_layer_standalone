@@ -49,7 +49,7 @@ SteppingAction::SteppingAction(const DetectorConstruction* detConstruction,
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
+ 
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
   // Collect energy and track length step by step
@@ -62,12 +62,13 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4StepPoint* cPoint = step->GetPostStepPoint();
   G4StepPoint* pPoint = step->GetPreStepPoint();
   G4ThreeVector preStepPos = pPoint->GetPosition();
-  //if (preStepPos == G4ThreeVector(0., 0., 0.)) {
 
   auto sensor0 = fDetConstruction->GetsiliconSensorPV();
   auto sensor1 = fDetConstruction->GetsiliconSensorPV_layer1();
 
   if ((sensor0 && (volume == sensor0 || volume_pre == sensor0)) || (sensor1 && (volume == sensor1 || volume_pre == sensor1))) {
+
+     if (preStepPos != G4ThreeVector(0., 0., 0.)) return; // only save the step from 0,0,0
 
       // printing out something 
       G4ThreeVector postStepPos = cPoint->GetPosition();
@@ -83,9 +84,9 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         //  G4cout << "YB: testing Process: " << process->GetProcessName() << G4endl;
           G4String particleName = track->GetDefinition()->GetParticleName();
           G4ThreeVector momentumDir = track->GetMomentumDirection();
-        //  G4cout << "YB: testingwith incomming from : " << particleName << G4endl;
-        //  G4cout << "YB: testing   pre              at : " << preStepPos.x() / mm << ", "<<preStepPos.y() / mm <<", "<< preStepPos.z() / mm   <<" ) mm"<< G4endl;
-        //  G4cout << "YB: testing   post              at : " << postStepPos.x() / mm << ", "<<postStepPos.y() / mm <<", "<< postStepPos.z() / mm   <<" ) mm"<< G4endl;
+         // G4cout << "YB: testingwith incomming from : " << particleName << G4endl;
+         // G4cout << "YB: testing   pre              at : " << preStepPos.x() / mm << ", "<<preStepPos.y() / mm <<", "<< preStepPos.z() / mm   <<" ) mm"<< G4endl;
+         // G4cout << "YB: testing   post              at : " << postStepPos.x() / mm << ", "<<postStepPos.y() / mm <<", "<< postStepPos.z() / mm   <<" ) mm"<< G4endl;
 
       }
 

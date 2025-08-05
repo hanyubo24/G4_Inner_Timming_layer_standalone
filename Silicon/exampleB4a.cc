@@ -175,12 +175,12 @@ int main(int argc, char** argv)
 
       auto actionInitialization = new B4a::ActionInitialization(detConstruction, inFileName,outFileName, gunZPos);
       runManager->SetUserInitialization(actionInitialization);
+      G4int nEvent_r = 1;
       if (!inFileName.empty()) {
         std::ifstream infile(inFileName);
         std::string line;
-        nEvent = 0;
-        while (std::getline(infile, line))
-            if (!line.empty() && isdigit(line[0])) ++nEvent;
+        while (std::getline(infile, line) and nEvent_r<=nEvent)
+            if (!line.empty() && isdigit(line[0])) ++nEvent_r;
        }
 
   }
