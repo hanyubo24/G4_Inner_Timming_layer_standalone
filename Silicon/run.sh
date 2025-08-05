@@ -23,5 +23,5 @@
 #for r in 240 250 260 270 280 290 300 310 320 330 340 350; do
 for r in 240; do
   fname="output/eff_times_kpiSep/ITT_30ps_cylinder_${r}mm_generic_bb.root"
-  ./build/Silicon_1layer_cylinder -csv table/belle3_noSL0SL1.csv  -z 0 -r $r -o $fname -n 1  
+  ./build/Silicon_1layer_cylinder -csv table/belle3_noSL0SL1.csv  -z 0 -r $r -o $fname -n 
 done

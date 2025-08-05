@@ -179,9 +179,10 @@ int main(int argc, char** argv)
       if (!inFileName.empty()) {
         std::ifstream infile(inFileName);
         std::string line;
-        while (std::getline(infile, line) and nEvent_r<=nEvent)
+        while (std::getline(infile, line) && (nEvent == -1 || nEvent_r < nEvent)) {
             if (!line.empty() && isdigit(line[0])) ++nEvent_r;
        }
+     }
 
   }
 
