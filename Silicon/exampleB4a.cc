@@ -50,7 +50,7 @@ void PrintUsage()
   G4cerr << " Usage: " << G4endl;
   G4cerr << " exampleB4a [-m macro ] [-u UIsession] [-t nThreads] [-vDefault]" << G4endl;
   G4cerr << " exampleB4a -p e- -pmin 80 -pmax 80 -o myOutput.root -z -14.0" << G4endl;
-  G4cerr << " exampleB4a -csv xxx.csv -o myOutput.root -z -14.0" << G4endl;
+  G4cerr << " exampleB4a -csv xxx.csv -o myOutput.root -z -14.0 -n 10 -skipN 0" << G4endl;
   G4cerr << " -r 240.0 [mm], ranging from 240 mm to 348 mm " << G4endl;
   G4cerr << " -ui: turnning on the ui" << G4endl;
 }
@@ -82,6 +82,7 @@ int main(int argc, char** argv)
   G4String outFileName = "Silicon.root"; 
   G4String inFileName = ""; 
   G4int nEvent = 1;
+  G4int SkipnEvent = 0;
   //G4double gunZPos = -2.0 * cm; 
   G4double gunZPos = 0.0 * cm; 
   std::vector<G4double> radii ={};
@@ -93,6 +94,8 @@ int main(int argc, char** argv)
       macro = argv[i + 1];
     else if (G4String(argv[i]) == "-n")
       nEvent = G4UIcommand::ConvertToInt(argv[i + 1]);
+    else if (G4String(argv[i]) == "-skipN")
+      SkipnEvent = G4UIcommand::ConvertToInt(argv[i + 1]);
     else if (G4String(argv[i]) == "-u")
       session = argv[i + 1];
     else if (G4String(argv[i]) == "-z")
@@ -176,14 +179,22 @@ int main(int argc, char** argv)
       auto actionInitialization = new B4a::ActionInitialization(detConstruction, inFileName,outFileName, gunZPos);
       runManager->SetUserInitialization(actionInitialization);
       G4int nEvent_r = 1;
+      G4int nEvent_skipped = 0;
       if (!inFileName.empty()) {
         std::ifstream infile(inFileName);
         std::string line;
-        while (std::getline(infile, line) && (nEvent == -1 || nEvent_r < nEvent)) {
-            if (!line.empty() && isdigit(line[0])) ++nEvent_r;
-       }
-     }
+        
+        while (std::getline(infile, line)) {
+           if (line.empty() || isdigit(line[0])) continue;
+           if (nEvent_skipped < SkipnEvent){
+               ++nEvent_skipped;continue;
+           }
+            ++nEvent_r;
 
+           if (nEvent != -1 && nEvent_r >= nEvent)  break;
+        }
+
+      }
   }
 
   runManager-> Initialize();

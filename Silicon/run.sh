@@ -20,8 +20,12 @@
 #./build/Silicon_cylinder -p mu- -pmin 1 -pmax 800 -o output/ITT_100ps_2layers_24cm_36cm_testacceptance_mu.root -n 80000 -z 0
 #./build/Silicon_cylinder -p kaon- -pmin 1 -pmax 800 -o output/ITT_100ps_2layers_24cm_36cm_testacceptance_kaon.root -n 80000 -z 0
 #./build/Silicon_cylinder -p proton -pmin 1 -pmax 800 -o output/ITT_100ps_2layers_24cm_36cm_testacceptance_proton.root -n 80000 -z 0
+nEvn=10000
 #for r in 240 250 260 270 280 290 300 310 320 330 340 350; do
 for r in 240; do
-  fname="output/eff_times_kpiSep/ITT_30ps_cylinder_${r}mm_generic_bb.root"
-  ./build/Silicon_1layer_cylinder -csv table/belle3_noSL0SL1.csv  -z 0 -r $r -o $fname -n 
+  for file_id in 0 1; do
+      skipNE=$((file_id * nEvn))
+      fname="output/eff_times_kpiSep/ITT_30ps_cylinder_${r}mm_generic_bb_${file_id}.root"
+      ./build/Silicon_1layer_cylinder -csv table/belle3_noSL0SL1.csv  -z 0 -r $r -o $fname -n $nEvn -skipN $skipNE
+  done 
 done
