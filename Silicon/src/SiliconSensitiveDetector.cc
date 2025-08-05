@@ -36,7 +36,7 @@ G4bool SiliconSensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*) 
   //hit->SetTime(step->GetPreStepPoint()->GetGlobalTime());
 
   //fHitsCollection->insert(hit);
-  //return true;
+  return true;
 }
 
 void SiliconSensitiveDetector::EndOfEvent(G4HCofThisEvent*) {

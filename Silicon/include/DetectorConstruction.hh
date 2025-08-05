@@ -68,7 +68,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     // get methods
     //
     const G4VPhysicalVolume* GetsiliconSensorPV() const;
-    const G4VPhysicalVolume* GetsiliconSensorPV_1() const;
+    const G4VPhysicalVolume* GetsiliconSensorPV_layer1() const;
 
   private:
     // methods
@@ -82,12 +82,12 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     // magnetic field messenger
 
     G4VPhysicalVolume* siliconSensorPV = nullptr;  // the absorber physical volume
-    G4VPhysicalVolume* siliconSensorPV_1 = nullptr;  // the absorber physical volume
+    G4VPhysicalVolume* siliconSensorPV_layer1 = nullptr;  // the absorber physical volume
     //G4VPhysicalVolume* fGapPV = nullptr;  // the gap physical volume
 
     G4bool fCheckOverlaps = true;  // option to activate checking of volumes overlaps
     G4LogicalVolume* fSiliconLogic = nullptr;
-    G4LogicalVolume* fSiliconLogic_1 = nullptr;
+    G4LogicalVolume* fSiliconLogic_layer1 = nullptr;
 };
 
 // inline functions
@@ -97,9 +97,9 @@ inline const G4VPhysicalVolume* DetectorConstruction::GetsiliconSensorPV() const
   return siliconSensorPV;
 }
 
-inline const G4VPhysicalVolume* DetectorConstruction::GetsiliconSensorPV_1() const
+inline const G4VPhysicalVolume* DetectorConstruction::GetsiliconSensorPV_layer1() const
 {
-  return siliconSensorPV_1;
+  return siliconSensorPV_layer1;
 }
 //
 //inline const G4VPhysicalVolume* DetectorConstruction::GetGapPV() const

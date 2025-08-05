@@ -50,6 +50,7 @@ void PrintUsage()
   G4cerr << " Usage: " << G4endl;
   G4cerr << " exampleB4a [-m macro ] [-u UIsession] [-t nThreads] [-vDefault]" << G4endl;
   G4cerr << " exampleB4a -p e- -pmin 80 -pmax 80 -o myOutput.root -z -14.0" << G4endl;
+  G4cerr << " exampleB4a -csv xxx.csv -o myOutput.root -z -14.0" << G4endl;
   G4cerr << " -ui: turnning on the ui" << G4endl;
 }
 }  // namespace
@@ -70,13 +71,16 @@ int main(int argc, char** argv)
   G4bool verboseBestUnits = true;
 #ifdef G4MULTITHREADED
   G4int nThreads = 0;
-  G4double pMin = 80 *MeV;
-  G4double pMax = 80 *MeV;
-  G4String particleName = "kaon-";
+  G4double pMin = 10 *MeV;
+  G4double pMax = 1000 *MeV;
+  //G4String particleName = "kaon-";
+  G4String particleName = "pi-";
   G4bool show_gui = false; 
   G4String outFileName = "Silicon.root"; 
-  G4int nEvent = 20;
-  G4double gunZPos = -14.0 * cm; 
+  G4String inFileName = ""; 
+  G4int nEvent = 1;
+  //G4double gunZPos = -2.0 * cm; 
+  G4double gunZPos = 0.0 * cm; 
 #endif
   for (G4int i = 1; i < argc; i = i + 2) {
     if (G4String(argv[i]) == "-m")
@@ -95,6 +99,8 @@ int main(int argc, char** argv)
         pMax = std::stod(argv[i + 1]) * MeV;
     else if (G4String(argv[i]) == "-o")  
         outFileName = argv[i + 1];
+    else if (G4String(argv[i]) == "-csv")  
+        inFileName = argv[i + 1];
     else if (G4String(argv[i]) == "-ui") 
         show_gui = true;
 #ifdef G4MULTITHREADED
@@ -146,8 +152,22 @@ int main(int argc, char** argv)
   runManager->SetUserInitialization(physicsList);
 
   //auto actionInitialization = new B4a::ActionInitialization(detConstruction);
-  auto actionInitialization = new B4a::ActionInitialization(detConstruction, particleName, pMin, pMax, outFileName, gunZPos);
-  runManager->SetUserInitialization(actionInitialization);
+  if (inFileName==""){
+      auto actionInitialization = new B4a::ActionInitialization(detConstruction, particleName, pMin, pMax, outFileName, gunZPos);
+      runManager->SetUserInitialization(actionInitialization);
+  }else{
+
+      auto actionInitialization = new B4a::ActionInitialization(detConstruction, inFileName,outFileName, gunZPos);
+      runManager->SetUserInitialization(actionInitialization);
+      if (!inFileName.empty()) {
+        std::ifstream infile(inFileName);
+        std::string line;
+        nEvent = 0;
+        while (std::getline(infile, line))
+            if (!line.empty() && isdigit(line[0])) ++nEvent;
+       }
+
+  }
 
   runManager-> Initialize();
   auto digimgr = G4DigiManager::GetDMpointer();

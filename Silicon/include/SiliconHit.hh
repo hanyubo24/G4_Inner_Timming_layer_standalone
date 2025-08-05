@@ -25,6 +25,8 @@ public:
   void SetStepLength(G4double stepLength) { fstepLength = stepLength; }
   void SetDedx(G4double dedx) { fdedx = dedx; }
   void SetMomIn(G4double mom) { fMomentumIn = mom; }
+  void SetPt(G4double pt) { fPt = pt; }
+  void SetPz(G4double pz) { fPz = pz; }
   void SetParticleMass(G4double mass) { fParticleMass = mass; }
   void SetHitLayer(G4int layer) { fLayer = layer; }
   void SetEventID(G4int EventID) { fEventID = EventID; }
@@ -44,6 +46,8 @@ public:
   G4double GetStepLength() const { return fstepLength; }
   G4double GetDedx() const { return fdedx; }
   G4double GetMomIn() const { return fMomentumIn; }
+  G4double GetPt() const { return fPt; }
+  G4double GetPz() const { return fPz; }
   G4double GetParticleMass() const { return fParticleMass; }
   G4int GetHitLayer() const { return fLayer; }
   G4double GetPathLength() const {return fpathLength;}
@@ -66,6 +70,8 @@ private:
   G4double fstepLength;
   G4double fdedx;
   G4double fMomentumIn;
+  G4double fPt;
+  G4double fPz;
   G4double fParticleMass;
   G4String fprocessName;
   G4double fActualDriftz;

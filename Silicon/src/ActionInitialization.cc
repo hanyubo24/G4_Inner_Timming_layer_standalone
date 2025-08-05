@@ -52,6 +52,13 @@ ActionInitialization::ActionInitialization(DetectorConstruction* detConstruction
     fgunZ(gunZ)
 {}
 
+ActionInitialization::ActionInitialization(DetectorConstruction* detConstruction, const G4String& filename, const G4String& outFileName,  G4double gunZ)
+: fDetConstruction(detConstruction),
+  finFileName(filename),
+  foutFileName(outFileName),
+  fgunZ(gunZ)
+{}
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void ActionInitialization::BuildForMaster() const
@@ -68,7 +75,12 @@ void ActionInitialization::BuildForMaster() const
 
 void ActionInitialization::Build() const
 {
-  SetUserAction(new PrimaryGeneratorAction(fParticleName, fPMin, fPMax, fgunZ));
+  if (finFileName == ""){
+      SetUserAction(new PrimaryGeneratorAction(fParticleName, fPMin, fPMax, fgunZ));
+  } else{
+  SetUserAction(new PrimaryGeneratorAction(finFileName, fgunZ));
+  }
+
   SetUserAction(new RunAction(foutFileName));
   auto eventAction = new EventAction;
   SetUserAction(eventAction);

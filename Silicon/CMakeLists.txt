@@ -2,7 +2,7 @@
 # Setup the project
 #
 cmake_minimum_required(VERSION 3.16...3.27)
-project(B4a)
+project(Silicon)
 
 #----------------------------------------------------------------------------
 # Find Geant4 package, activating all available UI and Vis drivers by default
@@ -23,9 +23,16 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #add_executable(Silicon_noB exampleB4a.cc ${sources} ${headers})
 #target_include_directories(Silicon_noB PRIVATE include)
 #target_link_libraries(Silicon_noB PRIVATE ${Geant4_LIBRARIES})
-add_executable(Silicon_thick exampleB4a.cc ${sources} ${headers})
-target_include_directories(Silicon_thick PRIVATE include)
-target_link_libraries(Silicon_thick PRIVATE ${Geant4_LIBRARIES})
+#add_executable(Silicon_thick exampleB4a.cc ${sources} ${headers})
+#target_include_directories(Silicon_thick PRIVATE include)
+#target_link_libraries(Silicon_thick PRIVATE ${Geant4_LIBRARIES})
+# a cylinder, the pixelID maynot work
+#add_executable(Silicon_cylinder_noB exampleB4a.cc ${sources} ${headers})
+#target_include_directories(Silicon_cylinder_noB PRIVATE include)
+#target_link_libraries(Silicon_cylinder_noB PRIVATE ${Geant4_LIBRARIES})
+add_executable(Silicon_cylinder exampleB4a.cc ${sources} ${headers})
+target_include_directories(Silicon_cylinder PRIVATE include)
+target_link_libraries(Silicon_cylinder PRIVATE ${Geant4_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we

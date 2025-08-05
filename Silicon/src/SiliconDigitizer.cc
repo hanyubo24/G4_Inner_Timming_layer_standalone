@@ -46,7 +46,8 @@ void SiliconDigitizer::Digitize() {
   
   for (size_t i = 0; i < hitsCol->entries(); ++i) {
     SiliconHit* hit = (*hitsCol)[i];
-    if (!hit) return;
+    //if (!hit) return;
+    if (!hit) continue;
     auto edep = hit->GetEdep();
     auto hitT = hit->GetTime();
     //auto hitTSmeared = hitT+ G4RandGauss::shoot(0., timeSmearing);
@@ -66,6 +67,8 @@ void SiliconDigitizer::Digitize() {
     auto stepl = hit->GetStepLength();
     auto stepdedx = hit->GetDedx();
     auto MomIn = hit->GetMomIn();
+    auto MomPt = hit->GetPt();
+    auto MomPz = hit->GetPz();
     auto massInParticle = hit->GetParticleMass();
     auto cur_layer= hit->GetHitLayer();
     auto z = pos.z();
@@ -99,10 +102,13 @@ void SiliconDigitizer::Digitize() {
     G4double dx = G4RandGauss::shoot(0., sigma_xy);
     G4double dy = G4RandGauss::shoot(0., sigma_xy);
 
-    G4int pixelX = static_cast<G4int>(std::floor((pos.x() + dx ) / pixelSizeX));
-    G4int pixelY = static_cast<G4int>(std::floor((pos.y() + dy ) / pixelSizeY));
-
-    if (pixelX < -200 || pixelX >= 200 || pixelY < -100 || pixelY >= 100) continue;
+    //G4int pixelX = static_cast<G4int>(std::floor((pos.x() + dx ) / pixelSizeX));
+    //G4int pixelY = static_cast<G4int>(std::floor((pos.y() + dy ) / pixelSizeY));
+    G4int pixelX = 0;
+    G4int pixelY =0;
+    //if (pixelX < -200 || pixelX >= 200 || pixelY < -100 || pixelY >= 100) {
+    //          //continue;
+    //}
     std::pair<G4int, G4int> pixelID = {pixelX, pixelY};
 
 
@@ -185,11 +191,11 @@ void SiliconDigitizer::Digitize() {
     analysisManager->FillNtupleDColumn(0, 16, P_pi);
     analysisManager->FillNtupleDColumn(0, 17, P_kaon);
     analysisManager->FillNtupleDColumn(0, 18, P_p);
-    analysisManager->FillNtupleDColumn(0, 19, L_e);
-    analysisManager->FillNtupleDColumn(0, 20, L_mu);
-    analysisManager->FillNtupleDColumn(0, 21, L_pi);
-    analysisManager->FillNtupleDColumn(0, 22, L_kaon);
-    analysisManager->FillNtupleDColumn(0, 23, L_p);
+    analysisManager->FillNtupleDColumn(0, 19, llh_e);
+    analysisManager->FillNtupleDColumn(0, 20, llh_mu);
+    analysisManager->FillNtupleDColumn(0, 21, llh_pi);
+    analysisManager->FillNtupleDColumn(0, 22, llh_kaon);
+    analysisManager->FillNtupleDColumn(0, 23, llh_p);
 
     analysisManager->FillNtupleDColumn(0, 24, hitPathLength);
     analysisManager->FillNtupleDColumn(0, 25, expt_e);
@@ -207,6 +213,9 @@ void SiliconDigitizer::Digitize() {
     //G4int eventID = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
     auto eventID= hit->GetEventID();
     analysisManager->FillNtupleIColumn(0,37, eventID);   
+    analysisManager->FillNtupleIColumn(0,38, MomPt);   
+    analysisManager->FillNtupleIColumn(0,39, MomPz);   
+
 
     analysisManager->AddNtupleRow(0);
 
@@ -227,7 +236,8 @@ void SiliconDigitizer::Digitize() {
    analysisManager->FillNtupleDColumn(1, 1, charge_event);
    analysisManager->FillNtupleDColumn(1, 2, length_event);
    analysisManager->FillNtupleDColumn(1, 3, edep_event);
-   analysisManager->FillNtupleDColumn(1, 4, betagamma_event);
+   analysisManager->FillNtupleDColumn(1, 4, MomIn_event);
+   analysisManager->FillNtupleDColumn(1, 5, betagamma_event);
    analysisManager->AddNtupleRow(1);
 
   StoreDigiCollection(digiCollection);

@@ -47,73 +47,118 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(const G4String& particleName, G4d
 :fParticleName(particleName), fPMin(pMin), fPMax(pMax), fgunZ(gunZ)
 {
   G4int nofParticles = 1;
-  
   fParticleGun = new G4ParticleGun(nofParticles);
+  useFile = false;
 }
 
+PrimaryGeneratorAction::PrimaryGeneratorAction(const G4String& filename, G4double gunZ)
+{
+    G4int nofParticles = 1;
+    fParticleGun = new G4ParticleGun(nofParticles);
+    fgunZ =  gunZ;
+    finFile.open(filename);
+    if (!finFile.is_open()){
+        G4Exception("PrimaryGeneratorAction", "FileOpenError", FatalException,
+                    ("Cannot open input file: " + filename).c_str());
+
+    }
+   useFile = true;
+}
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction()
 {
+  if (useFile){
+       finFile.close();
+   }
   delete fParticleGun;
+ 
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
-  // This function is called at the begining of event
+  // reading from a file
+  G4double Mdx = G4UniformRand()-0.5; 
+  G4double Mdy = G4UniformRand()-0.5;
+  //G4double Mdz = G4UniformRand()-0.5;
+  G4double Mdz =0.0; 
+  double cth, phi, p0, theta;
+  G4double p;
 
-  // In order to avoid dependence of PrimaryGeneratorAction
+  if (useFile) {
+        std::string line;
+        while (std::getline(finFile, line)) {
+            if (line.empty() || !isdigit(line[0])) continue;
 
-  G4double p = fPMin + (fPMax - fPMin) * G4UniformRand();
-  G4double theta = 2 * M_PI * G4UniformRand();
+            std::stringstream ss(line);
+            std::string token;
 
-  G4double Mdx = cos(theta); 
- //G4double Mdy =  (0.05)* G4UniformRand()-0.025; 
-  G4double Mdy =  (0.05)* G4UniformRand()-0.025; 
-  G4double Mdz =  1+0.05*sin(theta); 
+            G4int evt, run, pdg, primary;
+
+            try {
+                std::getline(ss, token, ','); evt = std::stoi(token);
+                std::getline(ss, token, ','); run = std::stoi(token);
+                std::getline(ss, token, ','); p0 = std::stod(token); // GeV
+                std::getline(ss, token, ','); cth = std::stod(token);
+                std::getline(ss, token, ','); phi = std::stod(token); // rad
+                std::getline(ss, token, ','); pdg = std::stoi(token); 
+                std::getline(ss, token, ','); theta = std::stoi(token); // rad
+                std::getline(ss, token, ','); primary = std::stoi(token); 
+                p = p0 * GeV;
+                
+                           
+            } catch (...) {
+                G4cerr << "Bad line in input file: " << line << G4endl;
+                continue;
+            }
+            if (pdg ==0){continue;} 
+            if (!(abs(pdg) == 321 || abs(pdg) == 211 || abs(pdg) == 11 || abs(pdg) == 13 || abs(pdg) ==2212)) {continue;}
+            if (p < 10 * MeV){continue;}
+            if (primary ==0){continue;}
+            auto particleDefinition = G4ParticleTable::GetParticleTable()->FindParticle(pdg);
+            fParticleGun->SetParticleDefinition(particleDefinition);
+           
+            if (!particleDefinition) {
+                G4cerr << "Unknown PDG code: " << pdg << G4endl;
+                continue;
+            }
+
+            G4double px = p * std::sin(theta) * std::cos(phi);
+            G4double py = p * std::sin(theta) * std::sin(phi);
+            G4double pz = p * cth;
+
+            auto dir = G4ThreeVector(px, py, pz).unit();
+            break; // generate only one particle per event
+        }
+
+        if (finFile.eof()) {
+            G4cerr << "End of file reached. No more particles." << G4endl;
+            useFile = false; // switch to fallback mode
+        }
+    }
+    if (!useFile){
+        p = fPMin + (fPMax - fPMin) * G4UniformRand();
+
+
+        auto particleDefinition = G4ParticleTable::GetParticleTable()->FindParticle(fParticleName);
+        //G4double mass = particleDefinition->GetPDGMass();
+        //G4double Mdz =  0.0; 
+        fParticleGun->SetParticleDefinition(particleDefinition);
+
+    }
+
   
-  G4ThreeVector dir(Mdx, Mdy, Mdz);
-  dir = dir.unit(); 
-  auto particleDefinition = G4ParticleTable::GetParticleTable()->FindParticle(fParticleName);
-  //G4cout << "[PrimaryGenerator] Using " << fParticleName 
-  //     << " with p in range: [" << fPMin / MeV << " MeV, " 
-  //     << fPMax / MeV << " MeV]" << G4endl;
-  //G4cout << "[PrimaryGenerator] position z: (should be always negative value ) " << fgunZ <<G4endl; 
-  G4double mass = particleDefinition->GetPDGMass();
-  //G4double energy = std::sqrt(p * p + mass * mass);
-  //G4double energy = p;
+    G4ThreeVector dir(Mdx, Mdy, Mdz);
+    dir = dir.unit(); 
 
-  fParticleGun->SetParticleDefinition(particleDefinition);
-  fParticleGun->SetParticleMomentum(p);
-  //fParticleGun->SetParticleMomentumDirection(dir);
-  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0, 0, 1.));
+    fParticleGun->SetParticleMomentum(p);
+    fParticleGun->SetParticleMomentumDirection(dir);
 
-
- // G4double worldZHalfLength = 0.;
- // auto worldLV = G4LogicalVolumeStore::GetInstance()->GetVolume("World");
-
- // auto siliconSensorLV = G4LogicalVolumeStore::GetInstance()->GetVolume("Silicon");
- // 
- // // Check that the world volume has box shape
- // G4Box* worldBox = nullptr;
- // if (siliconSensorLV) {
- //   worldBox = dynamic_cast<G4Box*>(siliconSensorLV->GetSolid());
- // }
-
- // if (worldBox) {
- //   worldZHalfLength = worldBox->GetZHalfLength();
- // }
- // else {
- //   G4ExceptionDescription msg;
- //   msg << "World volume of box shape not found." << G4endl;
- //   msg << "Perhaps you have changed geometry." << G4endl;
- //   msg << "The gun will be place in the center.";
- //   G4Exception("PrimaryGeneratorAction::GeneratePrimaries()", "MyCode0002", JustWarning, msg);
- // }
-  fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., fgunZ));
-  fParticleGun->GeneratePrimaryVertex(event);
+    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0.,  fgunZ));
+    fParticleGun->GeneratePrimaryVertex(event);
 
   // Set gun position
 }

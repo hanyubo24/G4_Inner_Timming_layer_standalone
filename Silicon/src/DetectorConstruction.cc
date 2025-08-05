@@ -31,6 +31,7 @@
 #include "SiliconSensitiveDetector.hh"
 #include "G4AutoDelete.hh"
 #include "G4Box.hh"
+#include "G4Tubs.hh"
 #include "G4Colour.hh"
 #include "G4GlobalMagFieldMessenger.hh"
 #include "G4LogicalVolume.hh"
@@ -78,14 +79,15 @@ void DetectorConstruction::DefineMaterials()
 
 G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
 {
-  // Geometry parameters
+  
   G4double pitch = 100 * micrometer;
   G4double thickness = 200 * micrometer;
+  //G4double thickness = 2*cm;
   //auto worldSizeXY = 50* pitch;
   //auto worldSizeZ = worldSizeXY*10;
   //auto worldSizeXY = 500* pitch;
-  auto worldSizeXY = 60*cm;
-  auto worldSizeZ = 60 * cm;
+  auto worldSizeXY = 200*cm;
+  auto worldSizeZ = 500 * cm;
 
   auto siliconMaterial = G4Material::GetMaterial("G4_Si");
   auto air = G4Material::GetMaterial("G4_AIR");
@@ -95,6 +97,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
   //
   auto worldS = new G4Box("World",  // its name
                           worldSizeXY / 2, worldSizeXY / 2, worldSizeZ / 2);  // its size
+
 
   auto worldLV = new G4LogicalVolume(worldS,  // its solid
                                      vacuum,  // its material
@@ -109,8 +112,10 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
                                    0,  // copy number
                                    fCheckOverlaps);  // checking overlaps
 
-  //
+  
   // Silicon
+/*
+ //  a simple layer 
   auto solidSensor = new G4Box("Silicon", 400*pitch/2, 100*pitch/2, thickness/2);
   auto siliconSensorLV = new G4LogicalVolume(solidSensor, siliconMaterial, "Silicon");
 
@@ -123,14 +128,45 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
 
  // fSiliconLogic_1 = siliconSensorLV_1; 
  // siliconSensorPV_1 = new G4PVPlacement(0, G4ThreeVector(0,0,10*cm), siliconSensorLV_1, "Silicon_1", worldLV, false, 0, fCheckOverlaps);
+*/
+ // a cylinder 
+  G4double angle_f= 12.0*deg;
+  G4double angle_b= 26.0*deg; // 180-154*deg
+  G4double radius_for_testing = 240*mm;
+  G4double length_f = radius_for_testing / std::tan(angle_f);
+  G4double length_b = radius_for_testing / std::tan(angle_b);
+
+  G4double radius_for_testing_layer1 = 360*mm;
+  G4double length_f_layer1 = radius_for_testing_layer1 / std::tan(angle_f);
+  G4double length_b_layer1 = radius_for_testing_layer1 / std::tan(angle_b);
+
+  auto solidSensor = new G4Tubs("Silicon", radius_for_testing,  radius_for_testing+thickness, (length_f+length_b)/2.0, 0.0*deg, 360.0*deg);
+  auto siliconSensorLV = new G4LogicalVolume(solidSensor, siliconMaterial, "Silicon");    
+  fSiliconLogic = siliconSensorLV; 
+  siliconSensorPV = new G4PVPlacement(0, G4ThreeVector(0,0, length_f - (length_f+length_b)/2.0), siliconSensorLV, "Silicon", worldLV, false, 0, fCheckOverlaps);
+
+  auto solidSensor_layer1 = new G4Tubs("Silicon_layer1", radius_for_testing_layer1,  radius_for_testing_layer1+thickness, (length_f_layer1+length_b_layer1)/2.0, 0.0*deg, 360.0*deg);
+  auto siliconSensorLV_layer1 = new G4LogicalVolume(solidSensor_layer1, siliconMaterial, "Silicon_layer1");    
+  fSiliconLogic_layer1 = siliconSensorLV_layer1; 
+  siliconSensorPV_layer1 = new G4PVPlacement(0, G4ThreeVector(0,0, length_f_layer1 - (length_f_layer1+length_b_layer1)/2.0), siliconSensorLV_layer1, "Silicon_layer1", worldLV, false, 0, fCheckOverlaps);
 
   // Visualization attributes
   //
   worldLV->SetVisAttributes(G4VisAttributes::GetInvisible());
   //worldLV->SetVisAttributes(G4VisAttributes(G4Colour::White()));
   siliconSensorLV->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
+  siliconSensorLV_layer1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
+
+  // Geometry parameters
+  G4double minStep = 0.0 * um;
+
+  auto* userLimits = new G4UserLimits(0., DBL_MAX, DBL_MAX, 0., minStep);
+  siliconSensorLV->SetUserLimits(userLimits);
 //  siliconSensorLV_1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
 
+
+  
+  
   // Always return the physical World
   //
   return worldPV;
@@ -144,7 +180,9 @@ void DetectorConstruction::ConstructSDandField()
   // Uniform magnetic field is then created automatically if
   // the field value is not zero.
   //G4ThreeVector fieldValue = G4ThreeVector(0., 1.5*tesla, 0.);
-  G4ThreeVector fieldValue = G4ThreeVector(0., 0., 0.);
+  G4ThreeVector fieldValue = G4ThreeVector(0., 0., 1.5*tesla);
+
+  //G4ThreeVector fieldValue = G4ThreeVector(0., 0., 0.);
   fMagFieldMessenger = new G4GlobalMagFieldMessenger(fieldValue);
   fMagFieldMessenger->SetVerboseLevel(1);
 
@@ -155,6 +193,7 @@ void DetectorConstruction::ConstructSDandField()
   auto* siliconSD = new SiliconSensitiveDetector("SiliconSD");
   sdManager->AddNewDetector(siliconSD);
   fSiliconLogic->SetSensitiveDetector(siliconSD);
+  fSiliconLogic_layer1->SetSensitiveDetector(siliconSD);
  // fSiliconLogic_1->SetSensitiveDetector(siliconSD);
 }
 

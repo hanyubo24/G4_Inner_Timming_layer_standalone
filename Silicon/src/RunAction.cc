@@ -116,6 +116,8 @@ RunAction::RunAction(const G4String& outFileName)
     analysisManager->CreateNtupleDColumn("postPos_z");
     analysisManager->CreateNtupleSColumn("processName");
     analysisManager->CreateNtupleIColumn("EventID");
+    analysisManager->CreateNtupleIColumn("Pt");
+    analysisManager->CreateNtupleIColumn("Pz");
 
     analysisManager->FinishNtuple();
     analysisManager->CreateNtuple("EventNtuple", "Event signal");
@@ -123,6 +125,7 @@ RunAction::RunAction(const G4String& outFileName)
     analysisManager->CreateNtupleDColumn("Charge");
     analysisManager->CreateNtupleDColumn("TotalLength");
     analysisManager->CreateNtupleDColumn("Dedx");
+    analysisManager->CreateNtupleDColumn("MomIn");
     analysisManager->CreateNtupleDColumn("betagamma");
     analysisManager->FinishNtuple();
   //

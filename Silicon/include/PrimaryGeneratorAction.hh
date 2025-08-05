@@ -32,6 +32,8 @@
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "globals.hh" 
+#include "fstream"
+
 
 class G4ParticleGun;
 class G4Event;
@@ -44,22 +46,26 @@ namespace B4
 /// It defines a single particle which hits the calorimeter
 /// perpendicular to the input face. The type of the particle
 /// can be changed via the G4 build-in commands of G4ParticleGun class
-/// (see the macros provided with this example).
+/// (see t`he macros provided with this example).
 
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
   public:
     PrimaryGeneratorAction(const G4String& particleName, G4double pMin, G4double pMax, G4double gunZ);
+    PrimaryGeneratorAction(const G4String& filename,  G4double gunZ);
     ~PrimaryGeneratorAction() override;
 
     void GeneratePrimaries(G4Event* event) override;
 
   private:
+
+    std::ifstream finFile;
     G4ParticleGun* fParticleGun = nullptr;  // G4 particle gun
     G4String fParticleName;
-  G4double fPMin;
-  G4double fPMax;
- G4double fgunZ;
+    G4double fPMin;
+    G4double fPMax;
+    G4double fgunZ;
+    G4bool useFile=false;
 };
 
 }  // namespace B4

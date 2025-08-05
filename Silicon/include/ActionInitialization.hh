@@ -47,6 +47,7 @@ class ActionInitialization : public G4VUserActionInitialization
 {
   public:
     ActionInitialization(B4::DetectorConstruction*, const G4String& particleName, G4double pMin, G4double pMax, const G4String& outFileName,G4double gunZ);
+    ActionInitialization(B4::DetectorConstruction*, const G4String& fileName, const G4String& outFileName,G4double gunZ);
     ~ActionInitialization() override = default;
 
     void BuildForMaster() const override;
@@ -55,6 +56,7 @@ class ActionInitialization : public G4VUserActionInitialization
   private:
     B4::DetectorConstruction* fDetConstruction = nullptr;
     G4String fParticleName, foutFileName;
+    G4String finFileName="";
     G4double fPMin, fPMax, fgunZ;
 
 };
