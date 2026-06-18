@@ -46,8 +46,13 @@ namespace B4a
 class ActionInitialization : public G4VUserActionInitialization
 {
   public:
-    ActionInitialization(B4::DetectorConstruction*, const G4String& particleName, G4double pMin, G4double pMax, const G4String& outFileName,G4double gunZ);
-    ActionInitialization(B4::DetectorConstruction*, const G4String& fileName, const G4String& outFileName,G4double gunZ);
+    ActionInitialization(B4::DetectorConstruction*, const G4String& particleName, G4double pMin, G4double pMax,
+                         const G4String& outFileName, G4double gunZ, G4double fixedTheta = -1.,
+                         G4double fixedPhi = -1., G4double fixedPt = -1., G4double fixedPz = -1.,
+                         G4double sigmaT = 30.e-12, G4double ptMin = -1., G4double ptMax = -1.,
+                         G4double cosThMin = -0.8, G4double cosThMax = 0.8);
+    ActionInitialization(B4::DetectorConstruction*, const G4String& fileName, const G4String& outFileName,
+                         G4double gunZ, G4double sigmaT = 30.e-12);
     ~ActionInitialization() override = default;
 
     void BuildForMaster() const override;
@@ -58,7 +63,15 @@ class ActionInitialization : public G4VUserActionInitialization
     G4String fParticleName, foutFileName;
     G4String finFileName="";
     G4double fPMin, fPMax, fgunZ;
-
+    G4double fFixedTheta = -1.;
+    G4double fFixedPhi = -1.;
+    G4double fFixedPt = -1.;
+    G4double fFixedPz = -1.;
+    G4double fSigmaT   = 30.e-12;
+    G4double fPtMin    = -1.;
+    G4double fPtMax    = -1.;
+    G4double fCosThMin = -0.8;
+    G4double fCosThMax =  0.8;
 };
 
 }  // namespace B4a

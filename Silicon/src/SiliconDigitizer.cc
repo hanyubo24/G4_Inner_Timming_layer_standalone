@@ -215,7 +215,12 @@ void SiliconDigitizer::Digitize() {
     analysisManager->FillNtupleIColumn(0,37, eventID);   
     analysisManager->FillNtupleIColumn(0,38, MomPt);   
     analysisManager->FillNtupleIColumn(0,39, MomPz);   
-
+    analysisManager->FillNtupleIColumn(0,40, hit->GetTrackID());
+    analysisManager->FillNtupleIColumn(0,41, hit->GetPDG());
+    analysisManager->FillNtupleIColumn(0,42, hit->GetCrossingIndex());
+    analysisManager->FillNtupleDColumn(0,43, hit->GetPhi());
+    analysisManager->FillNtupleDColumn(0,44, hit->GetTheta());
+    analysisManager->FillNtupleDColumn(0,45, hit->GetRB());
 
     analysisManager->AddNtupleRow(0);
 
@@ -232,13 +237,13 @@ void SiliconDigitizer::Digitize() {
    analysisManager->FillH2(2, MomIn_event, dedx_event); 
    analysisManager->FillH2(4, betagamma_event, dedx_event); 
 
-   analysisManager->FillNtupleDColumn(1, 0, hitsCol->entries());
-   analysisManager->FillNtupleDColumn(1, 1, charge_event);
-   analysisManager->FillNtupleDColumn(1, 2, length_event);
-   analysisManager->FillNtupleDColumn(1, 3, edep_event);
-   analysisManager->FillNtupleDColumn(1, 4, MomIn_event);
-   analysisManager->FillNtupleDColumn(1, 5, betagamma_event);
-   analysisManager->AddNtupleRow(1);
+   analysisManager->FillNtupleDColumn(3, 0, hitsCol->entries());
+   analysisManager->FillNtupleDColumn(3, 1, charge_event);
+   analysisManager->FillNtupleDColumn(3, 2, length_event);
+   analysisManager->FillNtupleDColumn(3, 3, edep_event);
+   analysisManager->FillNtupleDColumn(3, 4, MomIn_event);
+   analysisManager->FillNtupleDColumn(3, 5, betagamma_event);
+   analysisManager->AddNtupleRow(3);
 
   StoreDigiCollection(digiCollection);
 }

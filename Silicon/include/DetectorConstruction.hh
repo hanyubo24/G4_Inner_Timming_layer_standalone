@@ -41,6 +41,16 @@ class G4GlobalMagFieldMessenger;
 namespace B4
 {
 
+/// A passive (non-sensitive) cylindrical shell used to mimic upstream/outer
+/// material — e.g. the beampipe + VXD inside the FTL, or the CDC inner wall
+/// just outside it. Scatters and loses energy but produces no hits.
+struct PassiveLayer {
+  G4double radius_mm;      // inner radius of the shell [mm]
+  G4double thickness_um;   // radial thickness [um]
+  G4String material;       // NIST material name, e.g. "G4_Be", "G4_C"
+  G4String label;          // tag for logging, e.g. "inner", "outer"
+};
+
 /// Detector construction class to define materials and geometry.
 /// The calorimeter is a box made of a given number of layers. A layer consists
 /// of an absorber plate and of a detection gap. The layer is replicated.
@@ -58,7 +68,9 @@ namespace B4
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
   public:
-    DetectorConstruction(const std::vector<G4double>& radii);
+    DetectorConstruction(const std::vector<G4double>& radii, const G4double thickness,
+                         G4double bField = 1.5,
+                         const std::vector<PassiveLayer>& passiveLayers = {});
     ~DetectorConstruction() override = default;
 
   public:
@@ -69,6 +81,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     //
     const G4VPhysicalVolume* GetsiliconSensorPV() const;
     const G4VPhysicalVolume* GetsiliconSensorPV_layer1() const;
+    G4double GetBField() const { return fBField; }
 
   private:
     // methods
@@ -76,8 +89,11 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     void DefineMaterials();
     G4VPhysicalVolume* DefineVolumes();
 
-    // radius of the cylinder 
+    // radius of the cylinder
     std::vector<G4double> fRadii;
+    G4double fthickness;
+    G4double fBField;  // solenoid field in tesla
+    std::vector<PassiveLayer> fPassiveLayers;  // beampipe / CDC-wall mock shells
     // data members
     //
     static G4ThreadLocal G4GlobalMagFieldMessenger* fMagFieldMessenger;

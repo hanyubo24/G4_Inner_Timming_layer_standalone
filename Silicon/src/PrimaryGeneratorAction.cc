@@ -37,14 +37,21 @@
 #include "G4SystemOfUnits.hh"
 #include "globals.hh"
 #include "Randomize.hh"
+#include <cmath>
 
 namespace B4
 {
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-PrimaryGeneratorAction::PrimaryGeneratorAction(const G4String& particleName, G4double pMin, G4double pMax, G4double gunZ )
-:fParticleName(particleName), fPMin(pMin), fPMax(pMax), fgunZ(gunZ)
+PrimaryGeneratorAction::PrimaryGeneratorAction(const G4String& particleName, G4double pMin, G4double pMax,
+                                               G4double gunZ, G4double fixedTheta, G4double fixedPhi,
+                                               G4double fixedPt, G4double fixedPz,
+                                               G4double ptMin, G4double ptMax,
+                                               G4double cosThMin, G4double cosThMax)
+:fParticleName(particleName), fPMin(pMin), fPMax(pMax), fgunZ(gunZ),
+ fFixedTheta(fixedTheta), fFixedPhi(fixedPhi), fFixedPt(fixedPt), fFixedPz(fixedPz),
+ fPtMin(ptMin), fPtMax(ptMax), fCosThMin(cosThMin), fCosThMax(cosThMax)
 {
   G4int nofParticles = 1;
   fParticleGun = new G4ParticleGun(nofParticles);
@@ -81,12 +88,9 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
   // reading from a file
-  G4double Mdx = G4UniformRand()-0.5; 
-  G4double Mdy = G4UniformRand()-0.5;
-  //G4double Mdz = G4UniformRand()-0.5;
-  G4double Mdz =0.0; 
   double cth, phi, p0, theta;
-  G4double p;
+  G4double p = 0.;
+  G4ThreeVector dir;
 
   if (useFile) {
         std::string line;
@@ -139,20 +143,40 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
             useFile = false; // switch to fallback mode
         }
     }
-    if (!useFile){
-        p = fPMin + (fPMax - fPMin) * G4UniformRand();
-
-
+    if (!useFile) {
         auto particleDefinition = G4ParticleTable::GetParticleTable()->FindParticle(fParticleName);
-        //G4double mass = particleDefinition->GetPDGMass();
-        //G4double Mdz =  0.0; 
         fParticleGun->SetParticleDefinition(particleDefinition);
 
+        if (fPtMin >= 0. && fPtMax > fPtMin) {
+          // Flat-in-pT mode: uniform pT, uniform phi, uniform cos(theta)
+          const G4double pt     = fPtMin + (fPtMax - fPtMin) * G4UniformRand();
+          const G4double phi_az = CLHEP::twopi * G4UniformRand();
+          const G4double costh  = fCosThMin + (fCosThMax - fCosThMin) * G4UniformRand();
+          const G4double sinth  = std::sqrt(1. - costh * costh);
+          const G4double px = pt * std::cos(phi_az);
+          const G4double py = pt * std::sin(phi_az);
+          const G4double pz = pt * costh / sinth;
+          const G4ThreeVector mom(px, py, pz);
+          p   = mom.mag();
+          dir = mom.unit();
+        } else if (fFixedPt >= 0. && fFixedPz >= 0.) {
+          const G4double phi_az = (fFixedPhi >= 0.) ? fFixedPhi : CLHEP::twopi * G4UniformRand();
+          const G4ThreeVector mom(fFixedPt * std::cos(phi_az), fFixedPt * std::sin(phi_az), fFixedPz);
+          p = mom.mag();
+          dir = mom.unit();
+        } else if (fFixedTheta >= 0. && fFixedPhi >= 0.) {
+          p = fPMin + (fPMax - fPMin) * G4UniformRand();
+          dir = G4ThreeVector(std::sin(fFixedTheta) * std::cos(fFixedPhi),
+                              std::sin(fFixedTheta) * std::sin(fFixedPhi),
+                              std::cos(fFixedTheta));
+        } else {
+          p = fPMin + (fPMax - fPMin) * G4UniformRand();
+          G4double Mdx = G4UniformRand() - 0.5;
+          G4double Mdy = G4UniformRand() - 0.5;
+          G4double Mdz = G4UniformRand() - 0.5;
+          dir = G4ThreeVector(Mdx, Mdy, Mdz).unit();
+        }
     }
-
-  
-    G4ThreeVector dir(Mdx, Mdy, Mdz);
-    dir = dir.unit(); 
 
     fParticleGun->SetParticleMomentum(p);
     fParticleGun->SetParticleMomentumDirection(dir);

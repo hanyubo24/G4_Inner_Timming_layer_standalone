@@ -35,6 +35,9 @@
 #include "G4Step.hh"
 #include "globals.hh"
 #include "G4EventManager.hh"
+#include "G4PhysicalConstants.hh"
+#include <cmath>
+#include <map>
 
 using namespace B4;
 
@@ -52,13 +55,34 @@ SteppingAction::SteppingAction(const DetectorConstruction* detConstruction,
  
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
+  // Record primary track trajectory (subsampled to 5 mm) for event display.
+  // Map is keyed by trackID only and cleared at each new event so it cannot grow
+  // unbounded across the run.
+  G4Track* track = step->GetTrack();
+  if (track->GetParentID() == 0) {
+    static thread_local G4int sLastTrajEvt = -1;
+    static thread_local std::map<G4int, G4ThreeVector> lastPosByTrack;
+    const G4int eventID = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
+    if (eventID != sLastTrajEvt) {
+      lastPosByTrack.clear();
+      sLastTrajEvt = eventID;
+    }
+    const G4int trackID = track->GetTrackID();
+    const G4ThreeVector pos = step->GetPostStepPoint()->GetPosition();
+    const auto it = lastPosByTrack.find(trackID);
+    if (it == lastPosByTrack.end() || (pos - it->second).mag() > 5. * mm) {
+      fEventAction->AddTrajectoryPoint(trackID, track->GetDefinition()->GetPDGEncoding(),
+                                       pos.x(), pos.y(), pos.z());
+      lastPosByTrack[trackID] = pos;
+    }
+  }
+
   // Collect energy and track length step by step
 
   // get volume of the current step
   //auto volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
   auto volume = step->GetPostStepPoint()->GetTouchableHandle()->GetVolume();
   auto volume_pre = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
-  G4Track* track = step->GetTrack();
   G4StepPoint* cPoint = step->GetPostStepPoint();
   G4StepPoint* pPoint = step->GetPreStepPoint();
   G4ThreeVector preStepPos = pPoint->GetPosition();
@@ -66,16 +90,40 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   auto sensor0 = fDetConstruction->GetsiliconSensorPV();
   auto sensor1 = fDetConstruction->GetsiliconSensorPV_layer1();
 
-  if ((sensor0 && (volume == sensor0 || volume_pre == sensor0)) || (sensor1 && (volume == sensor1 || volume_pre == sensor1))) {
+  const G4bool inSensor0 = sensor0 && volume == sensor0;
+  const G4bool inSensor1 = sensor1 && volume == sensor1;
+  if (!inSensor0 && !inSensor1) return;
 
-     if (preStepPos != G4ThreeVector(0., 0., 0.)) return; // only save the step from 0,0,0
+  // Only record hits from the primary particle
+  if (track->GetParentID() != 0) return;
 
-      // printing out something 
+  // Trigger on the step that ENTERS silicon: post-step at geometry boundary,
+  // post-step volume = silicon, pre-step volume = NOT silicon. This works even
+  // when a fast track traverses the thin sensor in a single step (the previous
+  // logic — pre-step status == boundary — missed those cases and only recorded
+  // later interior sub-steps, killing ~80 % of first crossings).
+  if (cPoint->GetStepStatus() != fGeomBoundary) return;
+  auto volume_pre_chk = pPoint->GetTouchableHandle()->GetVolume();
+  const G4bool wasInSensor0 = sensor0 && volume_pre_chk == sensor0;
+  const G4bool wasInSensor1 = sensor1 && volume_pre_chk == sensor1;
+  if (wasInSensor0 || wasInSensor1) return;
+
+  // Limit to the first 5 boundary crossings per primary track per event.
+  // Uses a thread-local counter map cleared whenever the event ID changes.
+  {
+    static thread_local G4int  sLastEvt = -1;
+    static thread_local std::map<G4int, G4int> sHitCount; // trackID → #hits this event
+    const G4int curEvt = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
+    if (curEvt != sLastEvt) { sHitCount.clear(); sLastEvt = curEvt; }
+    G4int& cnt = sHitCount[track->GetTrackID()];
+    if (cnt >= 5) return;
+    ++cnt;
+  }
+
       G4ThreeVector postStepPos = cPoint->GetPosition();
 
       if (postStepPos.mag() < 1e-6) return;
       if (step->GetStepLength() == 0) return;  // skip pure Transportation
-      //if (step->GetTotalEnergyDeposit() <= 0) return;  // optional
 
       const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
       G4String processName = "notAssigned";
@@ -105,20 +153,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       auto vertex = track->GetVertexPosition();
       auto pos = cPoint->GetPosition(); // global position
 
-      // get actual drift length on z
-      G4TouchableHandle touchable = cPoint->GetTouchableHandle();
-      G4VSolid* solid = touchable->GetVolume()->GetLogicalVolume()->GetSolid();
-      G4ThreeVector localPos = touchable->GetHistory()->GetTopTransform().TransformPoint(pos); // change it to local position
-
-      G4double distanceToZsurface;
-          G4double halfZ = 100*um;
-          G4double zLocal = localPos.z();  // current z position in local coordinates
-          // 4. Distance to +Z or -Z surface
-          distanceToZsurface = std::min(halfZ - zLocal, halfZ + zLocal);
-      
-         // G4cout << "Distance to Z surface: " << distanceToZsurface / mm << " mm" << G4endl;
-
-      int hit_layer = (volume == fDetConstruction->GetsiliconSensorPV()) ? 0 : 1;
+      const int hit_layer = inSensor0 ? 0 : 1;
       //int hit_layer = pos.z()>1*cm ? 1:0;
       //auto pathLength = (pos-vertex).mag();
       auto pathLength = track-> GetTrackLength();
@@ -131,6 +166,9 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
      
 
       auto dedx = edep / stepLength;
+
+      // Bending radius: R[mm] = pT[MeV/c] / (0.3 * B[T])
+      const G4double rB = momentum.perp() / (0.3 * fDetConstruction->GetBField());
  
       static G4int hcID = -1;
       
@@ -175,14 +213,15 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
           hit->SetPt(momentum.perp());
           hit->SetPz(momentum.z());
           hit->SetParticleMass(mass);
-          hit->SetActualDriftz(distanceToZsurface);
+          hit->SetActualDriftz(0.);  // unused; physically meaningless for a barrel
 
           hit->SetHitLayer(hit_layer);
+          hit->SetTrackID(track->GetTrackID());
+          hit->SetPDG(track->GetDefinition()->GetPDGEncoding());
+          hit->SetPhi(momentum.phi());
+          hit->SetTheta(momentum.theta());
+          hit->SetRB(rB);
           hitCollection->insert(hit);
-         // G4debug<<" filling hitCollection ...."<<G4endl;
-         // G4cout << "[Debug] Entries AFTER insert: " << hitCollection->entries() << G4endl;
-  }
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

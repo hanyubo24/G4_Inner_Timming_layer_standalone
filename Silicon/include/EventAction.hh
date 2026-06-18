@@ -32,6 +32,7 @@
 
 #include "G4UserEventAction.hh"
 #include "globals.hh"
+#include <vector>
 
 class G4Event;
 
@@ -49,20 +50,32 @@ namespace B4a
 class EventAction : public G4UserEventAction
 {
   public:
-    EventAction() = default;
+    explicit EventAction(G4double sigmaT = 30.e-12) : fSigmaT(sigmaT) {}
     ~EventAction() override = default;
 
     void BeginOfEventAction(const G4Event* event) override;
     void EndOfEventAction(const G4Event* event) override;
 
     void AddAbs(G4double de);
+    void SetFirstHitRecorded(G4bool val) { fFirstHitRecorded = val; }
+    G4bool GetFirstHitRecorded() const { return fFirstHitRecorded; }
+    void AddTrajectoryPoint(G4int trackID, G4int pdg, G4double x, G4double y, G4double z);
 
   private:
+    struct TrajectoryPoint {
+      G4int trackID;
+      G4int pdg;
+      G4double x, y, z;
+    };
+    void WriteTrajectory(G4int eventID);
+    std::vector<TrajectoryPoint> fTrajectory;
     G4double fEnergyAbs = 0.;
     G4double ChargedHits =0.;
     G4double TimeHits=0.;
     G4int hitColID = -1; 
-    
+    G4bool fFirstHitRecorded = false;
+    G4double fSigmaT = 30.e-12;  // timing resolution in seconds
+
 };
 
 // inline functions

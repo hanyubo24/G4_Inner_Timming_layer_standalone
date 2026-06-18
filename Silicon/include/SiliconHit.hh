@@ -36,7 +36,12 @@ public:
   void SetPostStepPos(const G4ThreeVector& postStepPos){fpostStepPos = postStepPos;}
   void SetPathLength(G4double pathLength) { fpathLength = pathLength; }  
   void SetProcessName(const G4String processName){fprocessName = processName;}
-
+  void SetTrackID(G4int trackID) { fTrackID = trackID; }
+  void SetPDG(G4int pdg) { fPDG = pdg; }
+  void SetPhi(G4double phi) { fPhi = phi; }
+  void SetTheta(G4double theta) { fTheta = theta; }
+  void SetRB(G4double rB) { fRB = rB; }
+  void SetCrossingIndex(G4int idx) { fCrossingIndex = idx; }
 
   void AddEdep(G4double edep) { fEdep += edep; }
 
@@ -57,6 +62,12 @@ public:
   G4ThreeVector GetPostStepPos() const {return fpostStepPos;}
   G4String GetProcessName() const {return fprocessName;}
   G4int GetEventID() const {return fEventID;}
+  G4int GetTrackID() const { return fTrackID; }
+  G4int GetPDG() const { return fPDG; }
+  G4double GetPhi() const { return fPhi; }
+  G4double GetTheta() const { return fTheta; }
+  G4double GetRB() const { return fRB; }
+  G4int GetCrossingIndex() const { return fCrossingIndex; }
   void Print() override;
 
 private:
@@ -77,6 +88,12 @@ private:
   G4double fActualDriftz;
   G4int fLayer;
   G4int fEventID;
+  G4int fTrackID = -1;
+  G4int fPDG = 0;
+  G4double fPhi = 0.;
+  G4double fTheta = 0.;
+  G4double fRB = 0.;
+  G4int fCrossingIndex = -1;
 };
 
 using SiliconHitsCollection = G4THitsCollection<SiliconHit>;

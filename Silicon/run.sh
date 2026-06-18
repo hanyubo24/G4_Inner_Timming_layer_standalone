@@ -21,11 +21,26 @@
 #./build/Silicon_cylinder -p kaon- -pmin 1 -pmax 800 -o output/ITT_100ps_2layers_24cm_36cm_testacceptance_kaon.root -n 80000 -z 0
 #./build/Silicon_cylinder -p proton -pmin 1 -pmax 800 -o output/ITT_100ps_2layers_24cm_36cm_testacceptance_proton.root -n 80000 -z 0
 nEvn=10000
-#for r in 240 250 260 270 280 290 300 310 320 330 340 350; do
-for r in 240; do
-  for file_id in 0 1; do
-      skipNE=$((file_id * nEvn))
-      fname="output/eff_times_kpiSep/ITT_30ps_cylinder_${r}mm_generic_bb_${file_id}.root"
-      ./build/Silicon_1layer_cylinder -csv table/belle3_noSL0SL1.csv  -z 0 -r $r -o $fname -n $nEvn -skipN $skipNE
-  done 
+#for r in 240 250 260 270; do
+for particle in mu; do
+    #for r in 240 250 260 270 280 290 300 310 320 330 340 350; do
+    #for r in 300 310 320 330 340 350; do
+    for r in 170 180 190 200 210 220 230; do
+      for file_id in 0 1 2 3; do
+    
+    #nEvn=1000
+    #for r in 280 290 300 310; do
+    #  mkdir output/eff_times_kpiSep_$r
+    #  for file_id in {0..29}; do
+    
+    #for r in 320 330 340 350; do
+    #for r in 240; do
+      #for file_id in 0; do
+          skipNE=$((file_id * nEvn))
+          fname="output/eff_times_kpiSep_0807/ITT_30ps_cylinder_${r}mm_generic_bb_${file_id}.root"
+          ./build/Silicon_1layer_cylinder -csv table/belle3_noSL0SL1.csv  -z 0 -r $r -o $fname -n $nEvn -skipN $skipNE -t 0
+          #fname="output/eff_times_kpiSep_0807/ITT_30ps_cylinder_${r}mm_generic_bb_${particle}_${file_id}.root"
+          #./build/Silicon_1layer_cylinder -csv table/belle3_noSL0SL1_${particle}.csv  -z 0 -r $r -o $fname -n $nEvn -skipN $skipNE -t 0
+      done 
+    done
 done

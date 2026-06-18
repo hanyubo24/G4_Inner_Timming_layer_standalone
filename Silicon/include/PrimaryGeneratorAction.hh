@@ -51,7 +51,11 @@ namespace B4
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
   public:
-    PrimaryGeneratorAction(const G4String& particleName, G4double pMin, G4double pMax, G4double gunZ);
+    PrimaryGeneratorAction(const G4String& particleName, G4double pMin, G4double pMax, G4double gunZ,
+                           G4double fixedTheta = -1., G4double fixedPhi = -1.,
+                           G4double fixedPt = -1., G4double fixedPz = -1.,
+                           G4double ptMin = -1., G4double ptMax = -1.,
+                           G4double cosThMin = -0.8, G4double cosThMax = 0.8);
     PrimaryGeneratorAction(const G4String& filename,  G4double gunZ);
     ~PrimaryGeneratorAction() override;
 
@@ -65,7 +69,15 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4double fPMin;
     G4double fPMax;
     G4double fgunZ;
-    G4bool useFile=false;
+    G4double fFixedTheta = -1.;
+    G4double fFixedPhi   = -1.;
+    G4double fFixedPt    = -1.;
+    G4double fFixedPz    = -1.;
+    G4double fPtMin      = -1.;
+    G4double fPtMax      = -1.;
+    G4double fCosThMin   = -0.8;
+    G4double fCosThMax   =  0.8;
+    G4bool useFile = false;
 };
 
 }  // namespace B4

@@ -39,12 +39,28 @@
 #include "G4VisExecutive.hh"
 #include "G4DigiManager.hh"
 #include "SiliconDigitizer.hh"
+#include <sstream>
+#include <string>
+#include <vector>
 // #include "Randomize.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 namespace
 {
+// Parse "R,thickness_um,material" into a PassiveLayer with the given label.
+B4::PassiveLayer ParsePassive(const G4String& spec, const G4String& label)
+{
+  B4::PassiveLayer pl;
+  pl.label = label;
+  std::stringstream ss(spec);
+  std::string tok;
+  std::getline(ss, tok, ','); pl.radius_mm    = std::stod(tok);
+  std::getline(ss, tok, ','); pl.thickness_um = std::stod(tok);
+  std::getline(ss, tok, ','); pl.material     = tok;
+  return pl;
+}
+
 void PrintUsage()
 {
   G4cerr << " Usage: " << G4endl;
@@ -52,6 +68,11 @@ void PrintUsage()
   G4cerr << " exampleB4a -p e- -pmin 80 -pmax 80 -o myOutput.root -z -14.0" << G4endl;
   G4cerr << " exampleB4a -csv xxx.csv -o myOutput.root -z -14.0 -n 10 -skipN 0" << G4endl;
   G4cerr << " -r 240.0 [mm], ranging from 240 mm to 348 mm " << G4endl;
+  G4cerr << " -th 200 [um], thickness of the silicon " << G4endl;
+  G4cerr << " -B 1.5 [T], solenoid field strength (default 1.5 T)" << G4endl;
+  G4cerr << " -sigma_t 30 [ps], single-hit timing resolution (default 30 ps)" << G4endl;
+  G4cerr << " -inner_passive R,th_um,material  e.g. -inner_passive 16,500,G4_Be" << G4endl;
+  G4cerr << " -outer_passive R,th_um,material  e.g. -outer_passive 360,1000,G4_C" << G4endl;
   G4cerr << " -ui: turnning on the ui" << G4endl;
 }
 }  // namespace
@@ -71,13 +92,14 @@ int main(int argc, char** argv)
   G4String session;
   G4bool verboseBestUnits = true;
 #ifdef G4MULTITHREADED
-  G4int nThreads = 0;
+  G4int nThreads = 4;
 
 
 
   G4double pMin = 10 *MeV;
-  G4double pMax = 1000 *MeV;
-  G4String particleName = "pi-";
+  G4double pMax = 100 *MeV;
+  //G4String particleName = "kaon-";
+  G4String particleName = "mu-";
   G4bool show_gui = false; 
   G4String outFileName = "Silicon.root"; 
   G4String inFileName = ""; 
@@ -85,7 +107,19 @@ int main(int argc, char** argv)
   G4int SkipnEvent = 0;
   //G4double gunZPos = -2.0 * cm; 
   G4double gunZPos = 0.0 * cm; 
-  std::vector<G4double> radii ={};
+  G4double thicknessSilicon = 600 *um;
+  G4double bField = 1.5;      // tesla
+  G4double sigmaT = 30. * ps;  // G4 time units
+  G4double fixedTheta = -1.;
+  G4double fixedPhi   = -1.;
+  G4double fixedPt    = -1.;
+  G4double fixedPz    = -1.;
+  G4double ptMin      = -1.;   // flat-in-pT mode (MeV/c), disabled by default
+  G4double ptMax      = -1.;
+  G4double cosThMin   = -0.8;
+  G4double cosThMax   =  0.8;
+  std::vector<G4double> radii = {};
+  std::vector<B4::PassiveLayer> passiveLayers = {};
 
 
 #endif
@@ -100,6 +134,8 @@ int main(int argc, char** argv)
       session = argv[i + 1];
     else if (G4String(argv[i]) == "-z")
       gunZPos = std::stod(argv[i + 1]) * CLHEP::cm;
+    else if (G4String(argv[i]) == "-th")
+      thicknessSilicon = std::stod(argv[i + 1]) * CLHEP::um;
     else if (G4String(argv[i]) == "-p")
         particleName = argv[i + 1];
     else if (G4String(argv[i]) == "-r")
@@ -112,8 +148,32 @@ int main(int argc, char** argv)
         outFileName = argv[i + 1];
     else if (G4String(argv[i]) == "-csv")  
         inFileName = argv[i + 1];
-    else if (G4String(argv[i]) == "-ui") 
+    else if (G4String(argv[i]) == "-B")
+        bField = std::stod(argv[i + 1]);
+    else if (G4String(argv[i]) == "-sigma_t")
+        sigmaT = std::stod(argv[i + 1]) * ps;  // input in ps, store in G4 time units
+    else if (G4String(argv[i]) == "-inner_passive")
+        passiveLayers.push_back(ParsePassive(argv[i + 1], "inner"));
+    else if (G4String(argv[i]) == "-outer_passive")
+        passiveLayers.push_back(ParsePassive(argv[i + 1], "outer"));
+    else if (G4String(argv[i]) == "-ui")
         show_gui = true;
+    else if (G4String(argv[i]) == "-theta")
+        fixedTheta = std::stod(argv[i + 1]) * CLHEP::deg;
+    else if (G4String(argv[i]) == "-phi")
+        fixedPhi = std::stod(argv[i + 1]) * CLHEP::deg;
+    else if (G4String(argv[i]) == "-ptmin")
+        ptMin = std::stod(argv[i + 1]) * MeV;
+    else if (G4String(argv[i]) == "-ptmax")
+        ptMax = std::stod(argv[i + 1]) * MeV;
+    else if (G4String(argv[i]) == "-costh_min")
+        cosThMin = std::stod(argv[i + 1]);
+    else if (G4String(argv[i]) == "-costh_max")
+        cosThMax = std::stod(argv[i + 1]);
+    else if (G4String(argv[i]) == "-pt")
+        fixedPt = std::stod(argv[i + 1]) * MeV;
+    else if (G4String(argv[i]) == "-pz")
+        fixedPz = std::stod(argv[i + 1]) * MeV;
 #ifdef G4MULTITHREADED
     else if (G4String(argv[i]) == "-t") {
       nThreads = G4UIcommand::ConvertToInt(argv[i + 1]);
@@ -161,10 +221,11 @@ int main(int argc, char** argv)
   std::cout << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   Radii: ";
   for (const auto& r : radii) {
     std::cout << r << " ";
+    std::cout << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  thickness: "<< thicknessSilicon;
   }
   std::cout << std::endl;
 
-  auto detConstruction = new B4::DetectorConstruction(radii);
+  auto detConstruction = new B4::DetectorConstruction(radii, thicknessSilicon, bField, passiveLayers);
   runManager->SetUserInitialization(detConstruction);
 
   auto physicsList = new FTFP_BERT; // QGSP_BERT // YB: to be tested
@@ -172,11 +233,15 @@ int main(int argc, char** argv)
 
   //auto actionInitialization = new B4a::ActionInitialization(detConstruction);
   if (inFileName==""){
-      auto actionInitialization = new B4a::ActionInitialization(detConstruction, particleName, pMin, pMax, outFileName, gunZPos);
+      auto actionInitialization = new B4a::ActionInitialization(detConstruction, particleName, pMin, pMax,
+                                                                  outFileName, gunZPos, fixedTheta, fixedPhi,
+                                                                  fixedPt, fixedPz, sigmaT,
+                                                                  ptMin, ptMax, cosThMin, cosThMax);
       runManager->SetUserInitialization(actionInitialization);
   }else{
 
-      auto actionInitialization = new B4a::ActionInitialization(detConstruction, inFileName,outFileName, gunZPos);
+      auto actionInitialization = new B4a::ActionInitialization(detConstruction, inFileName, outFileName, gunZPos,
+                                                                 sigmaT);
       runManager->SetUserInitialization(actionInitialization);
       G4int nEvent_r = 1;
       G4int nEvent_skipped = 0;

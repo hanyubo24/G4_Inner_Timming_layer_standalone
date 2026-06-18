@@ -43,20 +43,36 @@ namespace B4a
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-ActionInitialization::ActionInitialization(DetectorConstruction* detConstruction, const G4String& particleName, G4double pMin, G4double pMax, const G4String& outFileName, G4double gunZ)
+ActionInitialization::ActionInitialization(DetectorConstruction* detConstruction, const G4String& particleName,
+                                           G4double pMin, G4double pMax, const G4String& outFileName, G4double gunZ,
+                                           G4double fixedTheta, G4double fixedPhi,
+                                           G4double fixedPt, G4double fixedPz, G4double sigmaT,
+                                           G4double ptMin, G4double ptMax,
+                                           G4double cosThMin, G4double cosThMax)
   : fDetConstruction(detConstruction),
     fParticleName(particleName),
     fPMin(pMin),
     fPMax(pMax),
     foutFileName(outFileName),
-    fgunZ(gunZ)
+    fgunZ(gunZ),
+    fFixedTheta(fixedTheta),
+    fFixedPhi(fixedPhi),
+    fFixedPt(fixedPt),
+    fFixedPz(fixedPz),
+    fSigmaT(sigmaT),
+    fPtMin(ptMin),
+    fPtMax(ptMax),
+    fCosThMin(cosThMin),
+    fCosThMax(cosThMax)
 {}
 
-ActionInitialization::ActionInitialization(DetectorConstruction* detConstruction, const G4String& filename, const G4String& outFileName,  G4double gunZ)
+ActionInitialization::ActionInitialization(DetectorConstruction* detConstruction, const G4String& filename,
+                                           const G4String& outFileName, G4double gunZ, G4double sigmaT)
 : fDetConstruction(detConstruction),
   finFileName(filename),
   foutFileName(outFileName),
-  fgunZ(gunZ)
+  fgunZ(gunZ),
+  fSigmaT(sigmaT)
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -76,13 +92,15 @@ void ActionInitialization::BuildForMaster() const
 void ActionInitialization::Build() const
 {
   if (finFileName == ""){
-      SetUserAction(new PrimaryGeneratorAction(fParticleName, fPMin, fPMax, fgunZ));
+      SetUserAction(new PrimaryGeneratorAction(fParticleName, fPMin, fPMax, fgunZ,
+                                               fFixedTheta, fFixedPhi, fFixedPt, fFixedPz,
+                                               fPtMin, fPtMax, fCosThMin, fCosThMax));
   } else{
   SetUserAction(new PrimaryGeneratorAction(finFileName, fgunZ));
   }
 
   SetUserAction(new RunAction(foutFileName));
-  auto eventAction = new EventAction;
+  auto eventAction = new EventAction(fSigmaT);
   SetUserAction(eventAction);
   SetUserAction(new SteppingAction(fDetConstruction, eventAction));
 

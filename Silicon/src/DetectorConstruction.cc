@@ -44,6 +44,7 @@
 #include "G4VisAttributes.hh"
 #include "G4SDManager.hh"
 #include "G4UserLimits.hh"
+#include <algorithm>
 namespace B4
 {
 
@@ -53,8 +54,10 @@ G4ThreadLocal G4GlobalMagFieldMessenger* DetectorConstruction::fMagFieldMessenge
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-DetectorConstruction::DetectorConstruction(const std::vector<G4double>& radii)
-  : fRadii(radii)
+DetectorConstruction::DetectorConstruction(const std::vector<G4double>& radii, const G4double thickness,
+                                           G4double bField,
+                                           const std::vector<PassiveLayer>& passiveLayers)
+  : fRadii(radii), fthickness(thickness), fBField(bField), fPassiveLayers(passiveLayers)
 {}
 
 G4VPhysicalVolume* DetectorConstruction::Construct()
@@ -85,13 +88,24 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
 {
   
   G4double pitch = 100 * micrometer;
-  G4double thickness = 200 * micrometer;
+  G4double thickness = fthickness;     // already in G4 internal length units (mm)
   //G4double thickness = 2*cm;
   //auto worldSizeXY = 50* pitch;
   //auto worldSizeZ = worldSizeXY*10;
   //auto worldSizeXY = 500* pitch;
-  auto worldSizeXY = 200*cm;
-  auto worldSizeZ = 500 * cm;
+  // Large world so low-pT tracks can complete full curls and re-enter silicon
+  const G4double radius_inner = fRadii[0] * mm;
+  const G4double theta_min    = 20. * deg;
+  // Each cylinder ends at z = R / tan(theta_min) so all layers cover the same
+  // theta acceptance [theta_min, pi - theta_min]; world Z is sized for the
+  // largest-radius element (silicon or passive shell).
+  const G4double half_length_z = radius_inner / std::tan(theta_min);
+  G4double max_radius_mm = *std::max_element(fRadii.begin(), fRadii.end());
+  for (const auto& pl : fPassiveLayers)
+    max_radius_mm = std::max(max_radius_mm, pl.radius_mm + pl.thickness_um * 1e-3);
+  const G4double half_length_z_outer = max_radius_mm * mm / std::tan(theta_min);
+  auto worldSizeXY = 3000 * cm;
+  auto worldSizeZ  = half_length_z_outer * 2 * 3;
 
   auto siliconMaterial = G4Material::GetMaterial("G4_Si");
   auto air = G4Material::GetMaterial("G4_AIR");
@@ -119,33 +133,30 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
   worldLV->SetVisAttributes(G4VisAttributes::GetInvisible());
 
   
-  // Silicon
-  //  - a cylinder 
-  G4double angle_f= 12.0*deg;
-  G4double angle_b= 26.0*deg; // 180-154*deg
+  // Silicon cylinder coaxial with Z (Belle II style), centred at the origin.
+  // G4Tubs: inner radius, outer radius, half-length along Z.
+  // Cover a fixed polar-angle acceptance [theta_min, 180-theta_min] for all radii.
+  // At radius R: z_max = R / tan(theta_min)  (same solid-angle slice regardless of R)
 
-  
-  //G4double radius_for_testing = 240*mm;
-  G4double radius_for_testing = fRadii[0]*mm; // so far only use the first layer 
-  G4double length_f = radius_for_testing / std::tan(angle_f);
-  G4double length_b = radius_for_testing / std::tan(angle_b);
-
-  auto solidSensor = new G4Tubs("Silicon", radius_for_testing,  radius_for_testing+thickness, (length_f+length_b)/2.0, 0.0*deg, 360.0*deg);
-  auto siliconSensorLV = new G4LogicalVolume(solidSensor, siliconMaterial, "Silicon");    
-  fSiliconLogic = siliconSensorLV; 
-  siliconSensorPV = new G4PVPlacement(0, G4ThreeVector(0,0, length_f - (length_f+length_b)/2.0), siliconSensorLV, "Silicon", worldLV, false, 0, fCheckOverlaps);
+  auto solidSensor = new G4Tubs("Silicon", radius_inner, radius_inner + thickness,
+                                half_length_z, 0.0 * deg, 360.0 * deg);
+  auto siliconSensorLV = new G4LogicalVolume(solidSensor, siliconMaterial, "Silicon");
+  fSiliconLogic = siliconSensorLV;
+  siliconSensorPV = new G4PVPlacement(nullptr, G4ThreeVector(), siliconSensorLV, "Silicon",
+                                      worldLV, false, 0, fCheckOverlaps);
   siliconSensorLV->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
 
-  if (fRadii.size()>1) {
-      G4double radius_for_testing_layer1 = fRadii[1]*mm;;
-      G4double length_f_layer1 = radius_for_testing_layer1 / std::tan(angle_f);
-      G4double length_b_layer1 = radius_for_testing_layer1 / std::tan(angle_b);
-
-      auto solidSensor_layer1 = new G4Tubs("Silicon_layer1", radius_for_testing_layer1,  radius_for_testing_layer1+thickness, (length_f_layer1+length_b_layer1)/2.0, 0.0*deg, 360.0*deg);
-      auto siliconSensorLV_layer1 = new G4LogicalVolume(solidSensor_layer1, siliconMaterial, "Silicon_layer1");    
-      fSiliconLogic_layer1 = siliconSensorLV_layer1; 
-      siliconSensorPV_layer1 = new G4PVPlacement(0, G4ThreeVector(0,0, length_f_layer1 - (length_f_layer1+length_b_layer1)/2.0), siliconSensorLV_layer1, "Silicon_layer1", worldLV, false, 0, fCheckOverlaps);
-      siliconSensorLV_layer1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
+  if (fRadii.size() > 1) {
+    const G4double radius_inner_layer1 = fRadii[1] * mm;
+    const G4double half_length_z_l1 = radius_inner_layer1 / std::tan(theta_min);
+    auto solidSensor_layer1 = new G4Tubs("Silicon_layer1", radius_inner_layer1,
+                                         radius_inner_layer1 + thickness, half_length_z_l1,
+                                         0.0 * deg, 360.0 * deg);
+    auto siliconSensorLV_layer1 = new G4LogicalVolume(solidSensor_layer1, siliconMaterial, "Silicon_layer1");
+    fSiliconLogic_layer1 = siliconSensorLV_layer1;
+    siliconSensorPV_layer1 = new G4PVPlacement(nullptr, G4ThreeVector(), siliconSensorLV_layer1,
+                                               "Silicon_layer1", worldLV, false, 0, fCheckOverlaps);
+    siliconSensorLV_layer1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
   }
   G4double minStep = 0.0 * um;
 
@@ -153,9 +164,35 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
   siliconSensorLV->SetUserLimits(userLimits);
 //  siliconSensorLV_1->SetVisAttributes(G4VisAttributes(G4Colour::Yellow()));
 
+  // ── Passive material shells (beampipe / CDC-wall mock-ups) ───────────────
+  // Non-sensitive cylinders that scatter and lose energy but produce no hits.
+  // Each spans the same theta acceptance as the silicon layers.
+  auto* nist = G4NistManager::Instance();
+  G4int ipass = 0;
+  for (const auto& pl : fPassiveLayers) {
+    auto* mat = nist->FindOrBuildMaterial(pl.material);
+    if (!mat) {
+      G4cerr << "[DetectorConstruction] unknown passive material '" << pl.material
+             << "' — skipping layer '" << pl.label << "'" << G4endl;
+      continue;
+    }
+    const G4double r_in  = pl.radius_mm * mm;
+    const G4double r_out = r_in + pl.thickness_um * um;
+    const G4double half_z = pl.radius_mm * mm / std::tan(theta_min);
+    const G4String name = "Passive_" + std::to_string(ipass) + "_" + pl.label;
 
-  
-  
+    auto* solid = new G4Tubs(name, r_in, r_out, half_z, 0.0 * deg, 360.0 * deg);
+    auto* lv    = new G4LogicalVolume(solid, mat, name);
+    new G4PVPlacement(nullptr, G4ThreeVector(), lv, name, worldLV, false, 0, fCheckOverlaps);
+    lv->SetVisAttributes(G4VisAttributes(G4Colour::Gray()));
+
+    const G4double x0frac = pl.thickness_um * um / mat->GetRadlen() * 100.;
+    G4cout << "[DetectorConstruction] passive '" << pl.label << "': "
+           << pl.material << "  R=" << pl.radius_mm << " mm  t=" << pl.thickness_um
+           << " um  -> " << x0frac << " % X0" << G4endl;
+    ++ipass;
+  }
+
   // Always return the physical World
   //
   return worldPV;
@@ -169,7 +206,7 @@ void DetectorConstruction::ConstructSDandField()
   // Uniform magnetic field is then created automatically if
   // the field value is not zero.
   //G4ThreeVector fieldValue = G4ThreeVector(0., 1.5*tesla, 0.);
-  G4ThreeVector fieldValue = G4ThreeVector(0., 0., 1.5*tesla);
+  G4ThreeVector fieldValue = G4ThreeVector(0., 0., fBField * tesla);
 
   //G4ThreeVector fieldValue = G4ThreeVector(0., 0., 0.);
   fMagFieldMessenger = new G4GlobalMagFieldMessenger(fieldValue);

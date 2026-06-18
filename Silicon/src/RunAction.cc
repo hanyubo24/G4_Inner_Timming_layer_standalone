@@ -49,21 +49,9 @@ RunAction::RunAction(const G4String& outFileName)
 : fOutFileName(outFileName)
 {
   // set printing event number per each event
-  G4RunManager::GetRunManager()->SetPrintProgress(1);
-
+  //G4RunManager::GetRunManager()->SetPrintProgress(1);
 
   // Create analysis manager
-  // The choice of the output format is done via the specified
-  // file extension.
- // auto analysisManager = G4AnalysisManager::Instance();
-
-  // Create directories
-  // analysisManager->SetHistoDirectoryName("histograms");
-  // analysisManager->SetNtupleDirectoryName("ntuple");
-  //analysisManager->SetVerboseLevel(1);
-  //analysisManager->SetNtupleMerging(true);
-  // Note: merging ntuples is available only with Root output
-
   // Book histograms, ntuple
     auto* analysisManager = G4AnalysisManager::Instance();
     //analysisManager->SetVerboseLevel(1);
@@ -75,6 +63,9 @@ RunAction::RunAction(const G4String& outFileName)
     analysisManager->CreateH2("Dedx_hit_gb", "Dedx per hit;[betaGamma];Dedx ", 500,0,10,500,0,20);
     analysisManager->CreateH2("Dedx_event_bg", "Dedx per event;[betaGamma];Dedx ", 500,0,10,500,0,20);
     analysisManager->CreateH2("HitMap_layer1", "HitMap;PixID X;PixID Y", 400, -200,200, 100,-50, 50 );
+    analysisManager->CreateH2("nCrossings_vs_rB", "Crossings per track vs bending radius;r_{B} [mm];nCrossings", 80, 0, 4000, 5, 0, 5);
+    analysisManager->CreateH1("doubleHit_rB", "Tracks with >=2 crossings vs r_{B};r_{B} [mm];Tracks", 80, 0, 4000);
+    analysisManager->CreateH1("singleHit_rB", "Tracks with 1 crossing vs r_{B};r_{B} [mm];Tracks", 80, 0, 4000);
 
     G4cout << "[THREAD] Creating ntuple..." << G4endl;
     analysisManager->CreateNtuple("HitNtuple", "Digitized Signals");
@@ -118,7 +109,40 @@ RunAction::RunAction(const G4String& outFileName)
     analysisManager->CreateNtupleIColumn("EventID");
     analysisManager->CreateNtupleIColumn("Pt");
     analysisManager->CreateNtupleIColumn("Pz");
+    analysisManager->CreateNtupleIColumn("TrackID");
+    analysisManager->CreateNtupleIColumn("PDG");
+    analysisManager->CreateNtupleIColumn("CrossingIndex");
+    analysisManager->CreateNtupleDColumn("phi");
+    analysisManager->CreateNtupleDColumn("theta");
+    analysisManager->CreateNtupleDColumn("rB");
 
+    analysisManager->FinishNtuple();
+    analysisManager->CreateNtuple("CurlingNtuple", "Per-track silicon crossing summary for low-pT curling study");
+    analysisManager->CreateNtupleIColumn("EventID");
+    analysisManager->CreateNtupleIColumn("TrackID");
+    analysisManager->CreateNtupleIColumn("Layer");
+    analysisManager->CreateNtupleIColumn("PDG");
+    analysisManager->CreateNtupleIColumn("nCrossings");
+    analysisManager->CreateNtupleDColumn("Pt");
+    analysisManager->CreateNtupleDColumn("rB");
+    analysisManager->CreateNtupleDColumn("phi1");
+    analysisManager->CreateNtupleDColumn("theta1");
+    analysisManager->CreateNtupleDColumn("time1");
+    analysisManager->CreateNtupleDColumn("time1_smeared");
+    analysisManager->CreateNtupleDColumn("phi2");
+    analysisManager->CreateNtupleDColumn("theta2");
+    analysisManager->CreateNtupleDColumn("time2");
+    analysisManager->CreateNtupleDColumn("time2_smeared");
+    analysisManager->CreateNtupleDColumn("deltaPhi");
+    analysisManager->CreateNtupleDColumn("deltaTime");
+    analysisManager->FinishNtuple();
+    analysisManager->CreateNtuple("TrajectoryNtuple", "Primary track points for event display");
+    analysisManager->CreateNtupleIColumn("EventID");
+    analysisManager->CreateNtupleIColumn("TrackID");
+    analysisManager->CreateNtupleIColumn("PDG");
+    analysisManager->CreateNtupleDColumn("x");
+    analysisManager->CreateNtupleDColumn("y");
+    analysisManager->CreateNtupleDColumn("z");
     analysisManager->FinishNtuple();
     analysisManager->CreateNtuple("EventNtuple", "Event signal");
     analysisManager->CreateNtupleDColumn("NumberOfHits");
@@ -126,7 +150,15 @@ RunAction::RunAction(const G4String& outFileName)
     analysisManager->CreateNtupleDColumn("TotalLength");
     analysisManager->CreateNtupleDColumn("Dedx");
     analysisManager->CreateNtupleDColumn("MomIn");
-    analysisManager->CreateNtupleDColumn("betagamma");
+    analysisManager->CreateNtupleDColumn("MomIn_x");
+    analysisManager->CreateNtupleDColumn("MomIn_y");
+    analysisManager->CreateNtupleDColumn("MomIn_z");
+    analysisManager->CreateNtupleDColumn("MomIn_t");
+    analysisManager->CreateNtupleDColumn("MomOu");
+    analysisManager->CreateNtupleDColumn("MomOu_x");
+    analysisManager->CreateNtupleDColumn("MomOu_y");
+    analysisManager->CreateNtupleDColumn("MomOu_z");
+    analysisManager->CreateNtupleDColumn("MomOu_t");
     analysisManager->FinishNtuple();
   //
   // Creating histograms
@@ -155,7 +187,6 @@ void RunAction::BeginOfRunAction(const G4Run* /*run*/)
     auto* analysisManager = G4AnalysisManager::Instance();
     analysisManager->SetVerboseLevel(1);
     analysisManager->SetNtupleMerging(true); 
-     
     analysisManager->OpenFile(fOutFileName);  // 
 
     //
